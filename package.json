@@ -1,0 +1,15 @@
+{
+  "name": "scopeproof-ai-washing-study-zh",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 4173",
+    "test": "python3 tests/test_contract.py",
+    "test:ui": "node tests/ui.test.mjs",
+    "test:cloud": "node tests/cloud-smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.58.2"
+  }
+}

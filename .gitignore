@@ -1,0 +1,7 @@
+private/
+participant_links.csv
+.DS_Store
+node_modules/
+test-artifacts/
+.supabase/
+supabase/.temp/

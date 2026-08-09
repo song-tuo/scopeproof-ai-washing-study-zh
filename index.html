@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ScopeProof | 人工智能产品宣传资料判断</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="upload-warning" class="upload-warning hidden" role="alert">
+    网络暂时不稳定，这一题还没有存到云端。请不要关闭页面。
+  </div>
+
+  <header class="site-bar">
+    <a class="brand" href="./" aria-label="ScopeProof 首页">
+      <img src="./assets/scopeproof-seal.png" alt="" width="40" height="40">
+      <span>
+        <strong>ScopeProof</strong>
+        <small>宣传资料判断</small>
+      </span>
+    </a>
+    <button id="help-button" class="icon-button" type="button" aria-label="查看答题说明" title="查看答题说明">?</button>
+  </header>
+
+  <main>
+    <section id="fatal-screen" class="narrow-page hidden" role="alert">
+      <p class="kicker">无法开始</p>
+      <h1>这个实验链接不完整</h1>
+      <p id="fatal-message" class="lead"></p>
+    </section>
+
+    <section id="start-screen" class="narrow-page hidden">
+      <p class="kicker">开始前请先阅读</p>
+      <h1>请帮我们判断人工智能产品的宣传资料</h1>
+      <p class="lead">您将看到 12 条虚构的产品宣传，以及页面上公开给出的资料。请只根据这些资料作答，不需要懂电脑技术。</p>
+
+      <div class="intro-band" aria-label="答题步骤">
+        <div><span>1</span><p><strong>看宣传</strong>先弄清商家说了什么。</p></div>
+        <div><span>2</span><p><strong>看资料</strong>逐份打开页面提供的资料。</p></div>
+        <div><span>3</span><p><strong>作判断</strong>回答五个简短问题。</p></div>
+      </div>
+
+      <section class="plain-note">
+        <h2>请记住</h2>
+        <p>这里判断的不是商家有没有说谎，而是<strong>本页看得到的资料，能不能说明商家的宣传</strong>。不要猜商家手里可能还有什么资料。</p>
+      </section>
+
+      <dl class="session-facts">
+        <div><dt>题目数量</dt><dd>12 条</dd></div>
+        <div><dt>大约用时</dt><dd>15 分钟</dd></div>
+        <div><dt>参与编号</dt><dd id="participant-label">读取中</dd></div>
+      </dl>
+
+      <button id="start-button" class="primary-button" type="button">我明白了，开始答题</button>
+      <p id="start-error" class="form-error hidden" role="alert"></p>
+    </section>
+
+    <section id="study-screen" class="study-page hidden">
+      <div class="progress-row">
+        <div>
+          <p id="progress-text" class="kicker">第 1 条，共 12 条</p>
+          <div class="progress-track" aria-hidden="true"><span id="progress-fill"></span></div>
+        </div>
+        <p class="progress-help">按自己的速度阅读即可</p>
+      </div>
+
+      <div class="study-layout">
+        <div class="reading-column">
+          <article class="product-sheet" aria-labelledby="product-name">
+            <div class="product-heading">
+              <div>
+                <p class="kicker">虚构的产品宣传页</p>
+                <h1 id="product-name"></h1>
+              </div>
+              <span id="claim-type" class="type-tag"></span>
+            </div>
+            <p class="product-context">假设您正在替一个 20 人的团队挑选软件。每人每月 30 美元，需要一次购买 12 个月。</p>
+            <section class="claim-box">
+              <p>商家的宣传说法</p>
+              <h2 id="claim-text"></h2>
+            </section>
+          </article>
+
+          <section class="evidence-section" aria-labelledby="evidence-title">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">本页公开的资料</p>
+                <h2 id="evidence-title">请逐份查看</h2>
+              </div>
+              <span id="evidence-count" class="count-label"></span>
+            </div>
+
+            <div id="system-status" class="status-banner" role="status"></div>
+            <p id="status-summary" class="status-summary"></p>
+
+            <div id="scopeproof-panel" class="scopeproof-panel hidden">
+              <div class="scope-heading">
+                <div>
+                  <p class="kicker">把宣传拆成四个要点</p>
+                  <h3>资料分别说到了什么</h3>
+                </div>
+                <strong id="coverage-score"></strong>
+              </div>
+              <div id="slot-grid" class="slot-grid"></div>
+            </div>
+
+            <div id="evidence-list" class="evidence-list"></div>
+          </section>
+        </div>
+
+        <aside class="answer-column" aria-labelledby="answer-title">
+          <form id="response-form" novalidate>
+            <div class="answer-heading">
+              <p class="kicker">请您作答</p>
+              <h2 id="answer-title">只根据本页资料判断</h2>
+              <p>五个问题都答完后，才能保存本题。</p>
+            </div>
+
+            <fieldset>
+              <legend><span>1</span>这些资料能不能说明商家的宣传？</legend>
+              <div class="choice-list" id="status-choices">
+                <label><input type="radio" name="status" value="supported"><span>这些资料能说明这句话</span></label>
+                <label><input type="radio" name="status" value="refuted"><span>这些资料显示这句话不对</span></label>
+                <label><input type="radio" name="status" value="insufficient"><span>现有资料还说不清</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="slider-fieldset">
+              <legend><span>2</span>先不管资料够不够，您觉得这句宣传有多大可能是真的？</legend>
+              <output id="truth-output">尚未选择</output>
+              <input id="truth-slider" class="untouched" type="range" min="0" max="100" step="5" value="50" aria-label="这句宣传可能为真的程度">
+              <div class="range-labels"><span>0%<small>很不可能</small></span><span>100%<small>很可能</small></span></div>
+              <p id="truth-prompt" class="slider-prompt">请拖动上面的滑杆</p>
+            </fieldset>
+
+            <fieldset class="slider-fieldset">
+              <legend><span>3</span>您对第 1 题的判断有多大把握？</legend>
+              <output id="confidence-output">尚未选择</output>
+              <input id="confidence-slider" class="untouched" type="range" min="0" max="100" step="5" value="50" aria-label="对资料判断的把握程度">
+              <div class="range-labels"><span>0%<small>没有把握</small></span><span>100%<small>很有把握</small></span></div>
+              <p id="confidence-prompt" class="slider-prompt">请拖动上面的滑杆</p>
+            </fieldset>
+
+            <fieldset>
+              <legend><span>4</span>如果现在要买这个产品，您会怎么做？</legend>
+              <div class="choice-list">
+                <label><input type="radio" name="action" value="rely-on-claim"><span>可以参考这句宣传来决定</span></label>
+                <label><input type="radio" name="action" value="request-evidence"><span>先请商家提供更多资料</span></label>
+                <label><input type="radio" name="action" value="discount-claim"><span>不把这句宣传当作购买依据</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend><span>5</span>再看到哪一类新资料，最能帮助您确认或改变判断？</legend>
+              <p class="question-note">以下都指由与商家没有关系的机构重新测试后得到的资料。</p>
+              <div id="counterfactual-choices" class="choice-list"></div>
+            </fieldset>
+
+            <p id="response-error" class="form-error hidden" role="alert"></p>
+            <button id="save-button" class="primary-button" type="submit" disabled>保存本题并继续</button>
+          </form>
+        </aside>
+      </div>
+    </section>
+
+    <section id="complete-screen" class="narrow-page hidden">
+      <p class="kicker">全部完成</p>
+      <h1>谢谢您的认真作答</h1>
+      <p class="lead">12 条题目已经保存。您可以关闭这个页面。</p>
+      <div class="completion-code">
+        <span>完成编号</span>
+        <strong id="completion-code">------</strong>
+      </div>
+      <p id="completion-warning" class="form-error hidden" role="alert"></p>
+      <button id="download-button" class="secondary-button hidden" type="button">下载本机记录</button>
+    </section>
+  </main>
+
+  <dialog id="help-dialog">
+    <div class="dialog-heading">
+      <div><p class="kicker">答题说明</p><h2>遇到不确定时怎么办</h2></div>
+      <button id="help-close" class="icon-button" type="button" aria-label="关闭答题说明">×</button>
+    </div>
+    <ol>
+      <li>只看当前页面提供的资料，不上网搜索。</li>
+      <li>“还说不清”不是说宣传一定是假的，只是现有资料不够。</li>
+      <li>每道题没有时间限制，按自己的速度阅读即可。</li>
+    </ol>
+  </dialog>
+
+  <footer class="site-footer">ScopeProof · 中文实验材料 v0.5 · 所有产品与公司均为虚构</footer>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
