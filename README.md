@@ -34,11 +34,13 @@ http://127.0.0.1:4173/?preview=1&condition=scopeproof&participant=TEST-S
 npm test
 npm run test:ui
 npm run test:cloud
+npm run test:production
 ```
 
 - `npm test`：检查 12 条刺激、语言、隐藏答案、响应式样式和数据库权限。
 - `npm run test:ui`：用 Chrome 检查桌面普通版、桌面分项版和 390px 手机版。
 - `npm run test:cloud`：使用公开 publishable key 完成 12 题云端测试，并确认匿名用户不能直接读表。
+- `npm run test:production`：从正式 GitHub Pages 完成 12 题并取得云端完成编号。
 
 ## 目录
 

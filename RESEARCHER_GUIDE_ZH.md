@@ -19,6 +19,7 @@
 npm test
 npm run test:ui
 npm run test:cloud
+npm run test:production
 ```
 
 3. 等待 GitHub Pages 部署成功，并用手机流量打开正式网页。
