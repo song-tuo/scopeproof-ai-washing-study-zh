@@ -20,7 +20,8 @@ try {
     await page.locator("#truth-slider").fill("50");
     await page.locator("#confidence-slider").fill("70");
     await page.getByRole("radio", { name: "先请商家提供更多资料", exact: true }).check();
-    await page.locator('#counterfactual-choices input[type="radio"]').first().check();
+    await page.locator('#h3-set-choices input[type="checkbox"]').first().check();
+    await page.locator('#priority-choices input[type="radio"]').first().check();
     const save = page.getByRole("button", { name: "保存本题并继续" });
     assert.equal(await save.isEnabled(), true);
     await save.click();

@@ -2,6 +2,8 @@ private/
 participant_links.csv
 .DS_Store
 node_modules/
+__pycache__/
+*.pyc
 test-artifacts/
 .supabase/
 supabase/.temp/

@@ -55,6 +55,8 @@ const state = {
   confidenceTouched: false,
   evidenceOpenCount: 0,
   openEvidenceId: null,
+  h3OptionOrder: [],
+  priorityOptionOrder: [],
   saving: false,
 };
 
@@ -337,25 +339,78 @@ function renderEvidence(item) {
   });
 }
 
-function renderOptions(item) {
-  const container = $("#counterfactual-choices");
+function optionLabel(option, item) {
+  const slot = item.slots.find((candidate) => candidate.id === option.id);
+  const wrapper = document.createElement("span");
+  wrapper.append(
+    createElement("strong", "", slot?.label || "要点"),
+    document.createTextNode(option.text),
+  );
+  return wrapper;
+}
+
+function renderH3Options(item) {
+  const container = $("#h3-set-choices");
   container.replaceChildren();
-  shuffled(item.options, `${participantId}:${item.id}:options`).forEach((option) => {
+  const ordered = shuffled(item.options, `${participantId}:${item.id}:h3-options`);
+  state.h3OptionOrder = ordered.map((option) => option.id);
+  ordered.forEach((option) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "h3-slot";
+    input.value = option.id;
+    input.addEventListener("change", () => {
+      if (input.checked) $("#h3-none").checked = false;
+      updatePriorityOptions(item);
+      updateSubmitState();
+    });
+    label.append(input, optionLabel(option, item));
+    container.append(label);
+  });
+}
+
+function selectedH3Ids() {
+  return [...document.querySelectorAll('input[name="h3-slot"]:checked')]
+    .map((input) => input.value);
+}
+
+function updatePriorityOptions(item) {
+  const selectedIds = selectedH3Ids();
+  const fieldset = $("#priority-fieldset");
+  const container = $("#priority-choices");
+  const previous = document.querySelector('input[name="priority"]:checked')?.value || null;
+
+  if (selectedIds.length === 0) {
+    state.priorityOptionOrder = [];
+    container.replaceChildren();
+    fieldset.classList.add("hidden");
+    return;
+  }
+
+  const selectedOptions = item.options.filter((option) => selectedIds.includes(option.id));
+  const ordered = shuffled(selectedOptions, `${participantId}:${item.id}:priority:${selectedIds.slice().sort().join("-")}`);
+  state.priorityOptionOrder = ordered.map((option) => option.id);
+  container.replaceChildren();
+  ordered.forEach((option) => {
     const label = document.createElement("label");
     const input = document.createElement("input");
     input.type = "radio";
-    input.name = "counterfactual";
+    input.name = "priority";
     input.value = option.id;
+    input.checked = option.id === previous;
     input.addEventListener("change", updateSubmitState);
-    label.append(input, createElement("span", "", option.text));
+    label.append(input, optionLabel(option, item));
     container.append(label);
   });
+  fieldset.classList.remove("hidden");
 }
 
 function resetResponse() {
   $("#response-form").reset();
   state.truthTouched = false;
   state.confidenceTouched = false;
+  state.priorityOptionOrder = [];
   state.saving = false;
   for (const sliderName of ["truth", "confidence"]) {
     const slider = $(`#${sliderName}-slider`);
@@ -364,6 +419,8 @@ function resetResponse() {
     $(`#${sliderName}-output`).textContent = "尚未选择";
     $(`#${sliderName}-prompt`).classList.remove("hidden");
   }
+  $("#priority-choices").replaceChildren();
+  $("#priority-fieldset").classList.add("hidden");
   $("#response-error").classList.add("hidden");
   updateSubmitState();
 }
@@ -393,12 +450,14 @@ function renderCurrentItem() {
 
   renderSlots(item);
   renderEvidence(item);
-  renderOptions(item);
+  renderH3Options(item);
   resetResponse();
 }
 
 function responseValues() {
   const form = new FormData($("#response-form"));
+  const item = currentItem();
+  const selectedOptionIds = form.getAll("h3-slot");
   return {
     status: form.get("status"),
     truthProbability: Number($("#truth-slider").value),
@@ -406,16 +465,29 @@ function responseValues() {
     confidence: Number($("#confidence-slider").value),
     confidenceTouched: state.confidenceTouched,
     action: form.get("action"),
-    counterfactual: form.get("counterfactual"),
+    selectedOptionIds,
+    optionOrder: [...state.h3OptionOrder],
+    slotStates: Object.fromEntries(item.slots.map((slot) => [
+      slot.id,
+      slot.state === "covered" ? "covered" : "non_covered",
+    ])),
+    answerKeyVersion: "h3-set-v0.6",
+    h3ExplicitNone: form.get("h3-none") === "none",
+    eligiblePriorityOptionIds: [...selectedOptionIds],
+    selectedPriorityOptionId: form.get("priority"),
+    priorityOptionOrder: [...state.priorityOptionOrder],
   };
 }
 
 function updateSubmitState() {
   const values = responseValues();
+  const h3Answered = values.h3ExplicitNone !== (values.selectedOptionIds.length > 0);
+  const priorityAnswered = values.selectedOptionIds.length === 0 || Boolean(values.selectedPriorityOptionId);
   const complete = Boolean(
     values.status
     && values.action
-    && values.counterfactual
+    && h3Answered
+    && priorityAnswered
     && values.truthProbabilityTouched
     && values.confidenceTouched
   );
@@ -425,8 +497,10 @@ function updateSubmitState() {
 async function submitResponse(event) {
   event.preventDefault();
   const values = responseValues();
-  if (!values.status || !values.action || !values.counterfactual || !values.truthProbabilityTouched || !values.confidenceTouched) {
-    $("#response-error").textContent = "请把五个问题全部答完。";
+  const h3Answered = values.h3ExplicitNone !== (values.selectedOptionIds.length > 0);
+  const priorityAnswered = values.selectedOptionIds.length === 0 || Boolean(values.selectedPriorityOptionId);
+  if (!values.status || !values.action || !h3Answered || !priorityAnswered || !values.truthProbabilityTouched || !values.confidenceTouched) {
+    $("#response-error").textContent = "请把五组问题全部答完。";
     $("#response-error").classList.remove("hidden");
     return;
   }
@@ -444,7 +518,7 @@ async function submitResponse(event) {
   }
 
   const responseMs = Math.max(0, Math.round(performance.now() - state.itemStartedAt));
-  const localEntry = createEvent(item.id, "item_submit", { ...values, response_ms: responseMs });
+  const localEntry = createEvent(item.id, "item_submit", { ...values, responseTimeMs: responseMs });
 
   try {
     let result;
@@ -467,7 +541,12 @@ async function submitResponse(event) {
         p_confidence: values.confidence,
         p_confidence_touched: values.confidenceTouched,
         p_action: values.action,
-        p_counterfactual: values.counterfactual,
+        p_h3_selected_ids: values.selectedOptionIds,
+        p_h3_option_order: values.optionOrder,
+        p_h3_explicit_none: values.h3ExplicitNone,
+        p_priority_eligible_ids: values.eligiblePriorityOptionIds,
+        p_priority_selected_id: values.selectedPriorityOptionId,
+        p_priority_option_order: values.priorityOptionOrder,
         p_response_ms: responseMs,
         p_evidence_open_count: state.evidenceOpenCount,
         p_event_uuid: localEntry.event_uuid,
@@ -546,6 +625,13 @@ function initialize() {
 $("#start-button").addEventListener("click", startSession);
 $("#response-form").addEventListener("submit", submitResponse);
 $("#response-form").addEventListener("change", updateSubmitState);
+$("#h3-none").addEventListener("change", (event) => {
+  if (event.target.checked) {
+    document.querySelectorAll('input[name="h3-slot"]').forEach((input) => { input.checked = false; });
+  }
+  updatePriorityOptions(currentItem());
+  updateSubmitState();
+});
 $("#truth-slider").addEventListener("input", (event) => {
   state.truthTouched = true;
   event.target.classList.remove("untouched");

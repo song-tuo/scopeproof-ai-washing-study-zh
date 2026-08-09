@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate balanced participant URLs for ScopeProof v0.5."""
+"""Generate balanced participant URLs for ScopeProof v0.6."""
 
 from __future__ import annotations
 

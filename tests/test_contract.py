@@ -41,7 +41,7 @@ def walk_keys(value):
 
 def main() -> int:
     version, claims = load_stimuli()
-    assert version == "study12-zh-cn-v0.5"
+    assert version == "study12-zh-cn-v0.6"
     assert len(claims) == 12
     assert len({claim["id"] for claim in claims}) == 12
     assert Counter(claim["status"] for claim in claims) == {
@@ -102,6 +102,14 @@ def main() -> int:
     assert "只根据本页资料判断" in html
     assert "不要猜商家手里" in html
     assert "尚未选择" in html
+    assert 'id="h3-set-choices"' in html
+    assert 'type="checkbox" name="h3-none"' in html
+    assert 'id="priority-fieldset"' in html
+
+    app = (ROOT / "app.js").read_text(encoding="utf-8")
+    assert 'answerKeyVersion: "h3-set-v0.6"' in app
+    assert "selectedOptionIds" in app
+    assert "priorityOptionOrder" in app
 
     sql = (ROOT / "supabase/schema.sql").read_text(encoding="utf-8")
     assert sql.count("enable row level security") == 3
@@ -109,7 +117,24 @@ def main() -> int:
     assert "grant execute on function public.create_scopeproof_session" in sql
     assert "truth_touched boolean not null check (truth_touched)" in sql
     assert "confidence_touched boolean not null check (confidence_touched)" in sql
+    assert "h3_selected_ids text[]" in sql
+    assert "h3_slot_states jsonb" in sql
+    assert "h3-set-v0.6" in sql
+    assert "invalid H3 option order" in sql
     assert not re.search(r"grant\s+(select|insert|update|delete).*scopeproof_", sql, re.I)
+
+    migration = (ROOT / "supabase/migrations/20260810040000_h3_set_measurement_v06.sql").read_text(encoding="utf-8")
+    server_states = {
+        item_id: json.loads(raw)
+        for item_id, raw in re.findall(r"when '([^']+)' then '(\{[^']+\})'::jsonb", migration)
+    }
+    assert len(server_states) == 12
+    for claim in claims:
+        expected = {
+            slot["id"]: "covered" if slot["state"] == "covered" else "non_covered"
+            for slot in claim["slots"]
+        }
+        assert server_states[claim["id"]] == expected
 
     print("PASS: 12-item contract, natural-language gate, no gold leakage, responsive and RLS checks")
     return 0

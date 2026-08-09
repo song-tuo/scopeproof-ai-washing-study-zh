@@ -8,8 +8,9 @@
 - **老年友好：** 正文 18px、主要按钮至少 56px、清晰焦点、滑杆未操作时不能提交。
 - **电脑与手机：** 桌面端并排显示资料和问题；手机端按阅读顺序单列显示。
 - **两种实验条件：** 普通资料版与 ScopeProof 分项资料版。
+- **集合式 H3：** 参与者多选所有尚未得到资料支持的宣传要点，再做一个不计对错的优先核查选择。
 - **安全存储：** GitHub Pages 只负责网页；Supabase 通过带会话令牌的 RPC 收集数据，参与者不能直接读取数据表。
-- **答案不公开：** 网页源码不包含声明真假、正确购买行动或正确新资料选项。
+- **隐藏研究标签：** 网页源码不包含声明真假或正确购买行动；H3 标准状态由服务器按题号再次生成并保存。
 
 页面风格参考 [Acme HTML Style](https://github.com/kaiychen9/acme-html-style/blob/main/README_zh.md)：象牙白底、陶土色强调、衬线标题、1.5px 边框和白色内容面板。为了照顾老年参与者，本项目把原规范的紧凑控件进一步放大。
 
@@ -52,8 +53,9 @@ npm run test:production
 ├── data/stimuli.js           不含隐藏答案的公开刺激
 ├── supabase/                 数据表、RLS 和 RPC 迁移
 ├── tools/generate_links.py   生成平衡参与者链接
+├── tools/prepare_h3_analysis.py 生成槽位级 H3 分析表
 ├── tests/                    静态、浏览器和云端测试
 └── private/                  本地答案键，已被 Git 忽略
 ```
 
-正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`。
+正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`；H3 的模型与计分口径见 `H3_MEASUREMENT_V06_ZH.md`。

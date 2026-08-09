@@ -59,6 +59,9 @@ await rpc("save_scopeproof_event", {
 
 let result = null;
 for (let position = 0; position < order.length; position += 1) {
+  const item = CLAIMS.find((claim) => claim.id === order[position]);
+  const selected = item.slots.filter((slot) => slot.state !== "covered").map((slot) => slot.id);
+  const optionOrder = item.options.map((option) => option.id);
   result = await rpc("save_scopeproof_response", {
     p_session_id: session.session_id,
     p_token: token,
@@ -70,7 +73,12 @@ for (let position = 0; position < order.length; position += 1) {
     p_confidence: 70,
     p_confidence_touched: true,
     p_action: "request-evidence",
-    p_counterfactual: "capability",
+    p_h3_selected_ids: selected,
+    p_h3_option_order: optionOrder,
+    p_h3_explicit_none: selected.length === 0,
+    p_priority_eligible_ids: selected,
+    p_priority_selected_id: selected[0] || null,
+    p_priority_option_order: selected,
     p_response_ms: 5000,
     p_evidence_open_count: 1,
     p_event_uuid: randomUUID(),
@@ -90,4 +98,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log("PASS: anonymous RPC completed 12 items; direct table read remained blocked");
+console.log("PASS: v0.6 set-valued H3 completed 12 cloud items; direct table read remained blocked");

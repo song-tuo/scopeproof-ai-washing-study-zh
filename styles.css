@@ -363,7 +363,17 @@ legend > span { width: 28px; height: 28px; display: inline-grid; place-items: ce
 .choice-list label:has(input:checked) { border-color: var(--clay-dark); background: var(--clay-soft); box-shadow: 0 0 0 1px var(--clay-dark); }
 .choice-list input { width: 20px; height: 20px; flex: none; margin: 3px 0 0; accent-color: var(--clay-dark); }
 .choice-list label span { min-width: 0; line-height: 1.55; }
+.choice-list label span strong { display: block; margin-bottom: 2px; font-size: 17px; }
 .question-note { margin: -4px 0 12px; color: var(--gray-500); font-size: 15px; }
+.none-choice { margin-top: 10px; padding-top: 10px; border-top: var(--border); }
+.priority-fieldset {
+  margin: 0 -14px;
+  padding: 22px 14px;
+  border-bottom: var(--border);
+  background: var(--info-soft);
+}
+.priority-fieldset legend { padding-top: 0; }
+.priority-fieldset .choice-list label { background: var(--white); }
 
 .slider-fieldset output { display: block; margin-bottom: 4px; color: var(--clay-dark); font-family: var(--serif); font-size: 26px; font-weight: 500; text-align: center; }
 .slider-fieldset input[type="range"] { width: 100%; min-height: 40px; margin: 4px 0; accent-color: var(--clay-dark); cursor: pointer; }

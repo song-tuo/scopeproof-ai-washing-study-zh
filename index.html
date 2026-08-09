@@ -38,7 +38,7 @@
       <div class="intro-band" aria-label="答题步骤">
         <div><span>1</span><p><strong>看宣传</strong>先弄清商家说了什么。</p></div>
         <div><span>2</span><p><strong>看资料</strong>逐份打开页面提供的资料。</p></div>
-        <div><span>3</span><p><strong>作判断</strong>回答五个简短问题。</p></div>
+        <div><span>3</span><p><strong>作判断</strong>回答五组简短问题。</p></div>
       </div>
 
       <section class="plain-note">
@@ -114,7 +114,7 @@
             <div class="answer-heading">
               <p class="kicker">请您作答</p>
               <h2 id="answer-title">只根据本页资料判断</h2>
-              <p>五个问题都答完后，才能保存本题。</p>
+              <p>五组问题都答完后，才能保存本题。</p>
             </div>
 
             <fieldset>
@@ -152,9 +152,21 @@
             </fieldset>
 
             <fieldset>
-              <legend><span>5</span>再看到哪一类新资料，最能帮助您确认或改变判断？</legend>
-              <p class="question-note">以下都指由与商家没有关系的机构重新测试后得到的资料。</p>
-              <div id="counterfactual-choices" class="choice-list"></div>
+              <legend><span>5</span>商家宣传里的哪些要点，目前还没有得到本页资料的支持？</legend>
+              <p class="question-note">可能是资料还不够，也可能是资料显示宣传不对。请选择所有符合的项。</p>
+              <div id="h3-set-choices" class="choice-list"></div>
+              <div class="choice-list none-choice">
+                <label>
+                  <input id="h3-none" type="checkbox" name="h3-none" value="none">
+                  <span><strong>这四个要点都已得到本页资料支持</strong></span>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset id="priority-fieldset" class="priority-fieldset hidden">
+              <legend>您刚才选出的要点中，如果下一步只能先核查一项，您会先核查哪一项？</legend>
+              <p class="question-note">这题没有标准答案，只想了解您最关心哪一项。</p>
+              <div id="priority-choices" class="choice-list"></div>
             </fieldset>
 
             <p id="response-error" class="form-error hidden" role="alert"></p>
@@ -189,7 +201,7 @@
     </ol>
   </dialog>
 
-  <footer class="site-footer">ScopeProof · 中文实验材料 v0.5 · 所有产品与公司均为虚构</footer>
+  <footer class="site-footer">ScopeProof · 中文实验材料 v0.6 · 所有产品与公司均为虚构</footer>
 
   <script src="./config.js"></script>
   <script type="module" src="./app.js"></script>
