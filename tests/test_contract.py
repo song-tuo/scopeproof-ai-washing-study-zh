@@ -41,7 +41,7 @@ def walk_keys(value):
 
 def main() -> int:
     version, claims = load_stimuli()
-    assert version == "study12-zh-cn-v0.6"
+    assert version == "study12-zh-cn-v0.7"
     assert len(claims) == 12
     assert len({claim["id"] for claim in claims}) == 12
     assert Counter(claim["status"] for claim in claims) == {
@@ -66,6 +66,62 @@ def main() -> int:
             "capability", "object", "condition", "metric_scope"
         }
         assert all(len(evidence["text"]) >= 20 for evidence in claim["evidence"])
+
+    # H3 option wording must not tell participants which slots are unsupported. Two guards:
+    # (1) no rhetorical intensifier or interrogative form may vary with slot state, and
+    # (2) no single short substring may separate supported from unsupported options well
+    #     enough to beat reading the page, either overall or within one slot type.
+    options = [
+        {
+            "slot": option["id"],
+            "state": next(s["state"] for s in claim["slots"] if s["id"] == option["id"]),
+            "text": option["text"],
+        }
+        for claim in claims
+        for option in claim["options"]
+    ]
+    assert len(options) == 48
+    for banned in ("真的", "确实", "果真", "究竟", "到底", "哪些", "是不是"):
+        assert not any(banned in option["text"] for option in options), banned
+    # A single uniform interrogative form removes question form as a state cue.
+    assert all("是否" in option["text"] for option in options)
+
+    def balanced_accuracy(rows: list[dict], cue: str) -> float:
+        pos = [row for row in rows if row["state"] != "covered"]
+        neg = [row for row in rows if row["state"] == "covered"]
+        if not pos or not neg:
+            return 0.5
+        sens = sum(cue in row["text"] for row in pos) / len(pos)
+        spec = sum(cue not in row["text"] for row in neg) / len(neg)
+        # A cue is equally usable inverted, so score the better of the two readings.
+        return max(0.5 * (sens + spec), 0.5 * ((1 - sens) + (1 - spec)))
+
+    def substrings(rows: list[dict], min_hits: int) -> set[str]:
+        found = set()
+        for row in rows:
+            plain = re.sub(r"[，。？?、\s]", "", row["text"])
+            for size in (2, 3, 4):
+                for start in range(len(plain) - size + 1):
+                    found.add(plain[start:start + size])
+        return {
+            cue for cue in found
+            if min_hits <= sum(cue in row["text"] for row in rows) <= len(rows) - min_hits
+        }
+
+    # Ceilings, not proofs. Options must name specific evidence, so wording correlates with slot
+    # identity and with what each slot actually says; that residue is real and is handled in the
+    # model by slot_type and item random intercepts. These bounds only catch a cue strong enough
+    # to beat reading the page (the best state-blind structural strategy scores about 0.70).
+    # Current worst values: 0.68 overall, 0.78 within a slot. The banned-word and uniform-form
+    # rules above, not these bounds, are the primary guard against a "真的"-class regression.
+    for cue in substrings(options, 4):
+        score = balanced_accuracy(options, cue)
+        assert score <= 0.70, f"overall wording cue {cue!r} reaches balanced accuracy {score:.2f}"
+    for slot in ("capability", "object", "condition", "metric_scope"):
+        rows = [option for option in options if option["slot"] == slot]
+        for cue in substrings(rows, 3):
+            score = balanced_accuracy(rows, cue)
+            assert score <= 0.85, f"{slot} wording cue {cue!r} reaches balanced accuracy {score:.2f}"
 
     participant_text = "\n".join([
         (ROOT / "index.html").read_text(encoding="utf-8"),
@@ -107,9 +163,19 @@ def main() -> int:
     assert 'id="priority-fieldset"' in html
 
     app = (ROOT / "app.js").read_text(encoding="utf-8")
-    assert 'answerKeyVersion: "h3-set-v0.6"' in app
+    assert 'answerKeyVersion: "h3-set-v0.7"' in app
     assert "selectedOptionIds" in app
     assert "priorityOptionOrder" in app
+
+    h3_doc = (ROOT / "H3_MEASUREMENT_V07_ZH.md").read_text(encoding="utf-8")
+    assert "H3 是确认性的过程/操纵指标，不是因果中介" in h3_doc
+    assert "不报告间接效应" in h3_doc
+    assert "同一屏" not in h3_doc
+    assert "只能部分控制" in h3_doc
+
+    guide = (ROOT / "RESEARCHER_GUIDE_ZH.md").read_text(encoding="utf-8")
+    assert "12–16 人软启动" in guide
+    assert "96 名有效完成者" in guide
 
     sql = (ROOT / "supabase/schema.sql").read_text(encoding="utf-8")
     assert sql.count("enable row level security") == 3
@@ -119,11 +185,11 @@ def main() -> int:
     assert "confidence_touched boolean not null check (confidence_touched)" in sql
     assert "h3_selected_ids text[]" in sql
     assert "h3_slot_states jsonb" in sql
-    assert "h3-set-v0.6" in sql
+    assert "h3-set-v0.7" in sql
     assert "invalid H3 option order" in sql
     assert not re.search(r"grant\s+(select|insert|update|delete).*scopeproof_", sql, re.I)
 
-    migration = (ROOT / "supabase/migrations/20260810040000_h3_set_measurement_v06.sql").read_text(encoding="utf-8")
+    migration = (ROOT / "supabase/migrations/20260810060000_v07_wording_interaction.sql").read_text(encoding="utf-8")
     server_states = {
         item_id: json.loads(raw)
         for item_id, raw in re.findall(r"when '([^']+)' then '(\{[^']+\})'::jsonb", migration)

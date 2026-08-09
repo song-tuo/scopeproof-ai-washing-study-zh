@@ -58,4 +58,4 @@ npm run test:production
 └── private/                  本地答案键，已被 Git 忽略
 ```
 
-正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`；H3 的模型与计分口径见 `H3_MEASUREMENT_V06_ZH.md`。
+正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`；H3 的模型与计分口径见 `H3_MEASUREMENT_V07_ZH.md`。

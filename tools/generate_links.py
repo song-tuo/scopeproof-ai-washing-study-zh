@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate balanced participant URLs for ScopeProof v0.6."""
+"""Generate balanced participant URLs for ScopeProof v0.7."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n", type=int, default=64)
+    parser.add_argument("--n", type=int, default=112)
     parser.add_argument(
         "--base-url",
         default="https://song-tuo.github.io/scopeproof-ai-washing-study-zh/",

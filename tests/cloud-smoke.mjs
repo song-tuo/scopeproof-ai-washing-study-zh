@@ -98,4 +98,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log("PASS: v0.6 set-valued H3 completed 12 cloud items; direct table read remained blocked");
+console.log("PASS: v0.7 set-valued H3 completed 12 cloud items; direct table read remained blocked");

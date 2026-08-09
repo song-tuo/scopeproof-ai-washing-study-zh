@@ -1,4 +1,4 @@
-export const STIMULUS_SET = "study12-zh-cn-v0.6";
+export const STIMULUS_SET = "study12-zh-cn-v0.7";
 
 export const CLAIMS = [
   {
@@ -20,7 +20,7 @@ export const CLAIMS = [
       { id: "E3", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "运行记录写明，测试使用的是票据助手 4.2 版本，以及当时采用的批量处理设置。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能提取发票中的各项内容" },
+      { id: "capability", text: "它是否能提取发票中的各项内容" },
       { id: "object", text: "测试是否包括这五种发票模板" },
       { id: "condition", text: "测试是否使用 4.2 版本和相同的批量设置" },
       { id: "metric_scope", text: "每个字段的准确率是否达到 97%" }
@@ -45,7 +45,7 @@ export const CLAIMS = [
       { id: "E3", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "测试记录写明了当时使用的具体语法模型版本。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能找出被动句" },
+      { id: "capability", text: "它是否能找出被动句" },
       { id: "object", text: "测试是否包括说明文件列出的每一种文章" },
       { id: "condition", text: "测试是否使用同一个语法模型版本" },
       { id: "metric_scope", text: "每一种文章的准确率是否都达到 94%" }
@@ -69,7 +69,7 @@ export const CLAIMS = [
       { id: "E2", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "一份检查记录显示，20 项获批任务已经创建。另有 6 项没有获批，只保留为草稿，没有发送到其他软件。记录还写明，发送失败时任务会交给哪个工作人员处理。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的会创建后续任务" },
+      { id: "capability", text: "它是否会创建后续任务" },
       { id: "object", text: "它是否会把选中的任务发送到指定软件" },
       { id: "condition", text: "它是否会先等用户批准，并在失败时交给工作人员" },
       { id: "metric_scope", text: "它是否只创建已经获批并被选中的任务" }
@@ -97,7 +97,7 @@ export const CLAIMS = [
       { id: "capability", text: "它生成的会议文字是否准确" },
       { id: "object", text: "测试是否使用同一批会议录音" },
       { id: "condition", text: "比较时是否使用这些产品的对应版本" },
-      { id: "metric_scope", text: "它是否真的比每一个主要竞争产品都准确" }
+      { id: "metric_scope", text: "它是否比每一个主要竞争产品都准确" }
     ]
   },
   {
@@ -118,10 +118,10 @@ export const CLAIMS = [
       { id: "E2", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "系统记录显示，每一批求职者排名生成后，都留有分析人员打开并查看的记录。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的会给求职者排名" },
+      { id: "capability", text: "它是否会给求职者排名" },
       { id: "object", text: "测试是否包括系统分批生成的排名" },
       { id: "condition", text: "质量检查人员是否每天查看这些排名" },
-      { id: "metric_scope", text: "这些排名是否真的从来没有人查看" }
+      { id: "metric_scope", text: "这些排名是否从来没有人查看" }
     ]
   },
   {
@@ -143,10 +143,10 @@ export const CLAIMS = [
       { id: "E3", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "系统记录显示，每一次发布之前，都会先发生一次由编辑完成的确认。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能发布已经获批的内容" },
+      { id: "capability", text: "它是否能发布已经获批的内容" },
       { id: "object", text: "测试是否包括发布流程里已经获批的内容" },
       { id: "condition", text: "每次发布前是否仍要由编辑确认" },
-      { id: "metric_scope", text: "内容获批后是否真的完全自动发布" }
+      { id: "metric_scope", text: "内容获批后是否完全自动发布" }
     ]
   },
   {
@@ -167,10 +167,10 @@ export const CLAIMS = [
       { id: "E2", source: "产品技术说明", kind: "商家文件", relation: "supports", text: "商家的技术说明写明，这项编辑工具面向专业写作者。" }
     ],
     options: [
-      { id: "capability", text: "使用工具后，编辑时间是否真的减少" },
+      { id: "capability", text: "使用工具后，编辑时间是否减少" },
       { id: "object", text: "参加测试的人是否都是专业写作者" },
       { id: "condition", text: "使用工具前后，工作任务和条件是否相同" },
-      { id: "metric_scope", text: "编辑时间是否真的减少了 50%" }
+      { id: "metric_scope", text: "编辑时间是否减少了 50%" }
     ]
   },
   {
@@ -192,7 +192,7 @@ export const CLAIMS = [
       { id: "E3", source: "系统运行记录", kind: "系统记录", relation: "supports", text: "正式运行记录显示，截图反映的是当前提供给用户的版本。测量期间没有使用其他版本。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能正确提取商务文件中的内容" },
+      { id: "capability", text: "它是否能正确提取商务文件中的内容" },
       { id: "object", text: "测试是否使用各种常见的商务文件" },
       { id: "condition", text: "测试是否使用当前正式提供给用户的版本" },
       { id: "metric_scope", text: "准确率是否达到 99%，以及一共测试了多少项" }
@@ -216,10 +216,10 @@ export const CLAIMS = [
       { id: "E2", source: "产品宣传页", kind: "商家网页", relation: "relevant", text: "商家的宣传页写道，处理普通申请时，系统会跳过招聘人员查看这一步。页面没有提供独立测试或系统记录。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能自动筛选申请" },
+      { id: "capability", text: "它是否能自动筛选申请" },
       { id: "object", text: "测试是否包括被列为普通类别的申请" },
-      { id: "condition", text: "哪些申请必须由招聘人员查看或接手处理" },
-      { id: "metric_scope", text: "普通申请是否真的完全不由招聘人员查看" }
+      { id: "condition", text: "是否有申请必须由招聘人员查看或接手" },
+      { id: "metric_scope", text: "普通申请是否完全不由招聘人员查看" }
     ]
   },
   {
@@ -240,10 +240,10 @@ export const CLAIMS = [
       { id: "E2", source: "产品技术说明", kind: "商家文件", relation: "supports", text: "商家的技术说明列出了票据助手可以接收的文件格式。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能正确处理不同版式" },
+      { id: "capability", text: "它是否能正确处理不同版式" },
       { id: "object", text: "测试是否包括产品可以接收的各种文件格式" },
       { id: "condition", text: "处理前是否需要人工设置或调整" },
-      { id: "metric_scope", text: "它是否真的无需设置就能处理任何版式" }
+      { id: "metric_scope", text: "它是否无需设置就能处理任何版式" }
     ]
   },
   {
@@ -267,7 +267,7 @@ export const CLAIMS = [
       { id: "capability", text: "安装后，它是否能持续正常工作" },
       { id: "object", text: "测试是否包括安装后的全部工作流程" },
       { id: "condition", text: "安装步骤和使用权限是否符合说明" },
-      { id: "metric_scope", text: "运行时是否真的完全不需要人监督" }
+      { id: "metric_scope", text: "运行时是否完全不需要人监督" }
     ]
   },
   {
@@ -288,10 +288,10 @@ export const CLAIMS = [
       { id: "E2", source: "产品技术说明", kind: "商家文件", relation: "supports", text: "商家的技术说明列出了票据助手能够读入系统的文件类别。" }
     ],
     options: [
-      { id: "capability", text: "它是否真的能发现并处理文件异常" },
+      { id: "capability", text: "它是否能发现并处理文件异常" },
       { id: "object", text: "测试是否包括产品能够读入的各类文件" },
-      { id: "condition", text: "自动处理失败后，哪些情况必须交给工作人员" },
-      { id: "metric_scope", text: "所有异常是否真的都能自动处理" }
+      { id: "condition", text: "自动处理失败后，是否必须交给工作人员" },
+      { id: "metric_scope", text: "所有异常是否都能自动处理" }
     ]
   }
 ];

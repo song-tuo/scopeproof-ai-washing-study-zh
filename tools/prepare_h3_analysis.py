@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a v0.6 response export into preregistered H3 analysis tables."""
+"""Convert a v0.7 response export into preregistered H3 analysis tables."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 
 SLOTS = ("capability", "object", "condition", "metric_scope")
-STIMULUS_SET = "study12-zh-cn-v0.6"
-ANSWER_KEY_VERSION = "h3-set-v0.6"
+STIMULUS_SET = "study12-zh-cn-v0.7"
+ANSWER_KEY_VERSION = "h3-set-v0.7"
 ITEM_STATUS = {
     "P-S-01": "supported",
     "P-S-04": "supported",
@@ -26,6 +26,12 @@ ITEM_STATUS = {
     "P-F-01": "insufficient",
     "A-F-01": "insufficient",
     "A-F-02": "insufficient",
+}
+EPISTEMIC_TARGET = {"supported": 1.0, "refuted": 0.0, "insufficient": 0.5}
+CORRECT_ACTION = {
+    "supported": "rely-on-claim",
+    "refuted": "discount-claim",
+    "insufficient": "request-evidence",
 }
 
 
@@ -110,6 +116,13 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
         condition = (row.get("condition") or "").strip()
         if condition not in {"baseline", "scopeproof"}:
             raise ValueError(f"Row {row_number}: invalid condition")
+        truth_probability = int(row.get("truth_probability", -1))
+        confidence = int(row.get("confidence", -1))
+        action = (row.get("action") or "").strip()
+        if not 0 <= truth_probability <= 100 or not 0 <= confidence <= 100:
+            raise ValueError(f"Row {row_number}: invalid probability or confidence")
+        if action not in {"rely-on-claim", "request-evidence", "discount-claim"}:
+            raise ValueError(f"Row {row_number}: invalid action")
         selected = parse_array(row.get("h3_selected_ids"))
         option_order = parse_array(row.get("h3_option_order"))
         priority_eligible = parse_array(row.get("priority_eligible_ids"))
@@ -143,13 +156,15 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
         fn = len(actual - selected_set)
         tn = len(set(SLOTS) - actual - selected_set)
         trial_order = int(row.get("position", 0)) + 1
+        verdict_type = ITEM_STATUS[item_id]
+        epistemic_brier = ((truth_probability / 100) - EPISTEMIC_TARGET[verdict_type]) ** 2
         common = {
             "participant_id": participant,
             "condition": condition,
             "item_id": item_id,
             "trial_order": trial_order,
             "claim_type": "performance" if item_id.startswith("P-") else "automation",
-            "verdict_type": ITEM_STATUS[item_id],
+            "verdict_type": verdict_type,
         }
 
         for slot in SLOTS:
@@ -169,6 +184,12 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
             "selected_ids": "|".join(selected),
             "actual_noncovered_ids": "|".join(slot for slot in SLOTS if slot in actual),
             "exact_set_accuracy": int(selected_set == actual),
+            "h3_slot_accuracy": f"{(tp + tn) / 4:.6f}",
+            "truth_probability": truth_probability,
+            "confidence": confidence,
+            "epistemic_brier": f"{epistemic_brier:.6f}",
+            "action": action,
+            "action_correct": int(action == CORRECT_ACTION[verdict_type]),
             "tp": tp,
             "tn": tn,
             "fp": fp,
@@ -178,16 +199,21 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
             "balanced_accuracy": balanced_rate(tp, fn, tn, fp),
         })
 
+        # With a single eligible slot the priority answer is forced, not chosen: the interface
+        # fills it in without asking. Such rows must stay out of the exploratory priority
+        # distribution, so they are flagged rather than silently pooled.
+        priority_forced = len(selected) == 1
         priority_rows.append({
             **common,
             "eligible_priority_ids": "|".join(priority_eligible),
             "selected_priority_id": priority_selected,
             "priority_option_order": "|".join(priority_order),
-            "has_priority_question": int(bool(selected)),
+            "has_priority_question": int(len(selected) >= 2),
+            "priority_forced": int(priority_forced),
         })
 
     if not slot_rows:
-        raise ValueError("No eligible v0.6 responses remained after filtering")
+        raise ValueError("No eligible v0.7 responses remained after filtering")
     if not allow_incomplete:
         incomplete = {participant: len(items) for participant, items in participant_items.items() if len(items) != 12}
         if incomplete:
@@ -208,6 +234,9 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
             "item_count": len(rows),
             "slot_decision_count": len(rows) * 4,
             "exact_set_accuracy": f"{sum(row['exact_set_accuracy'] for row in rows) / len(rows):.6f}",
+            "mean_h3_slot_accuracy": f"{sum(float(row['h3_slot_accuracy']) for row in rows) / len(rows):.6f}",
+            "mean_epistemic_brier": f"{sum(float(row['epistemic_brier']) for row in rows) / len(rows):.6f}",
+            "action_accuracy": f"{sum(row['action_correct'] for row in rows) / len(rows):.6f}",
             "sensitivity": safe_rate(tp, tp + fn),
             "specificity": safe_rate(tn, tn + fp),
             "balanced_accuracy": balanced_rate(tp, fn, tn, fp),

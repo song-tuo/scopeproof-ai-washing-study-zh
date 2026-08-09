@@ -20,11 +20,11 @@ const screens = ["#fatal-screen", "#start-screen", "#study-screen", "#complete-s
 const statusMeta = {
   supported: {
     systemLabel: "本页资料：四个要点都有相应资料",
-    summary: "本页资料说清了这句话的四个要点。",
+    summary: "四个要点都得到了本页资料的支持。",
   },
   refuted: {
     systemLabel: "本页资料：有一项结果与宣传不一致",
-    summary: "四个要点都有资料，但其中一项结果和商家的宣传不一致。",
+    summary: "四个要点都有相应资料，但其中一项的结果与宣传不一致。",
   },
   insufficient: {
     systemLabel: "本页资料：有些要点还缺少相应资料",
@@ -57,6 +57,7 @@ const state = {
   openEvidenceId: null,
   h3OptionOrder: [],
   priorityOptionOrder: [],
+  priorityAutoFilled: false,
   saving: false,
 };
 
@@ -293,8 +294,9 @@ function renderSlots(item) {
     grid.append(wrapper);
   });
 
-  const mentioned = item.slots.filter((slot) => slot.state !== "missing").length;
-  $("#coverage-score").textContent = `${mentioned}/4`;
+  // Contradicted evidence does not count as support.
+  const supported = item.slots.filter((slot) => slot.state === "covered").length;
+  $("#coverage-score").textContent = `${supported}/4`;
 }
 
 function renderEvidence(item) {
@@ -392,18 +394,23 @@ function updatePriorityOptions(item) {
   const ordered = shuffled(selectedOptions, `${participantId}:${item.id}:priority:${selectedIds.slice().sort().join("-")}`);
   state.priorityOptionOrder = ordered.map((option) => option.id);
   container.replaceChildren();
+  // A one-candidate priority is forced and identifiable downstream from the eligible set.
+  const forced = ordered.length === 1;
+  // Do not carry an auto-filled value into a real choice.
+  const carried = state.priorityAutoFilled ? null : previous;
   ordered.forEach((option) => {
     const label = document.createElement("label");
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "priority";
     input.value = option.id;
-    input.checked = option.id === previous;
+    input.checked = forced || option.id === carried;
     input.addEventListener("change", updateSubmitState);
     label.append(input, optionLabel(option, item));
     container.append(label);
   });
-  fieldset.classList.remove("hidden");
+  state.priorityAutoFilled = forced;
+  fieldset.classList.toggle("hidden", forced);
 }
 
 function resetResponse() {
@@ -411,6 +418,7 @@ function resetResponse() {
   state.truthTouched = false;
   state.confidenceTouched = false;
   state.priorityOptionOrder = [];
+  state.priorityAutoFilled = false;
   state.saving = false;
   for (const sliderName of ["truth", "confidence"]) {
     const slider = $(`#${sliderName}-slider`);
@@ -442,11 +450,14 @@ function renderCurrentItem() {
   status.className = `status-banner ${item.status}`;
   status.textContent = statusMeta[item.status].systemLabel;
 
+  const supported = item.slots.filter((slot) => slot.state === "covered").length;
+  const contradicted = item.slots.filter((slot) => slot.state === "contradicted").length;
   const missing = item.slots.filter((slot) => slot.state === "missing").length;
-  const mentioned = item.slots.length - missing;
-  $("#status-summary").textContent = item.status === "insufficient"
-    ? `四个要点中，本页资料说到了 ${mentioned} 项；另外 ${missing} 项还没有相应资料。`
-    : statusMeta[item.status].summary;
+  $("#status-summary").textContent = contradicted > 0
+    ? `四个要点中，有 ${supported} 项得到本页资料支持；另有 ${contradicted} 项的结果与宣传不一致。`
+    : missing > 0
+      ? `四个要点中，有 ${supported} 项得到本页资料支持；另有 ${missing} 项还没有找到相应资料。`
+      : statusMeta[item.status].summary;
 
   renderSlots(item);
   renderEvidence(item);
@@ -471,7 +482,7 @@ function responseValues() {
       slot.id,
       slot.state === "covered" ? "covered" : "non_covered",
     ])),
-    answerKeyVersion: "h3-set-v0.6",
+    answerKeyVersion: "h3-set-v0.7",
     h3ExplicitNone: form.get("h3-none") === "none",
     eligiblePriorityOptionIds: [...selectedOptionIds],
     selectedPriorityOptionId: form.get("priority"),

@@ -1,4 +1,4 @@
-# ScopeProof v0.6 研究者指南
+# ScopeProof v0.7 研究者指南
 
 ## 当前服务
 
@@ -6,8 +6,8 @@
 - 正式网页：`https://song-tuo.github.io/scopeproof-ai-washing-study-zh/`
 - Supabase 项目：`scopeproof-ai-washing-study-zh`
 - Supabase 项目编号：`mrrgljrezsoepwflbato`
-- 刺激版本：`study12-zh-cn-v0.6`
-- H3 答案键版本：`h3-set-v0.6`
+- 刺激版本：`study12-zh-cn-v0.7`
+- H3 答案键版本：`h3-set-v0.7`
 
 数据库密码保存在本机钥匙串，服务名称为 `scopeproof-ai-washing-study-zh-db`。网页只包含公开 publishable key，不包含数据库密码或 secret/service-role key。
 
@@ -25,13 +25,23 @@ npm run test:production
 
 3. 等待 GitHub Pages 部署成功，并用手机流量打开正式网页。
 4. 使用 `TEST-D1` 完成一场正式网页测试，在 Supabase 中确认有 12 条 response。
-5. 生成 64 条平衡链接：
+5. 生成 112 条平衡招募链接，目标取得 96 名有效完成者（每组 48 人）：
 
 ```bash
 python3 tools/generate_links.py
 ```
 
 6. 不要把 `private/`、答案键、service-role key 或导出的原始数据提交到 GitHub。
+
+## 软启动与题量
+
+正式设计保留 12 题，每位参与者提供 48 个 H3 槽位判断。先完成 **12–16 人软启动**，两组人数相等；只检查技术故障、缺失数据、总时长和阅读行为，不查看组间效果。
+
+- 目标中位总时长不超过 20 分钟；超过 25 分钟须暂停招募并检查流程。
+- 同时报告每题中位 `response_ms` 和 `evidence_open_count` 随题序的变化。
+- H3 balanced accuracy 的前后 1/3 差异只作疲劳描述，不用小样本的 10 个百分点差异单独触发删题。
+- 若软启动后不改参与者可见内容或交互，这些场次可计入 96 名有效样本；若修改，则必须再次升版，旧版本不与正式数据合并。
+- 若确实需要缩减到 8 题，必须保持 truth × decidability 四格和 claim type 平衡，并作为新版本重新软启动。
 
 ## 数据检查
 
@@ -55,7 +65,7 @@ order by started_at desc;
 
 正式分析排除编号以 `TEST`、`REVIEW` 或 `PROBE` 开头的场次，并且只保留：
 
-- `stimulus_set = 'study12-zh-cn-v0.6'`
+- `stimulus_set = 'study12-zh-cn-v0.7'`
 - `status = 'complete'`
 - `current_position = 12`
 - 恰好 12 条 response
@@ -74,6 +84,9 @@ select
   r.item_id,
   r.position,
   r.response_status,
+  r.truth_probability,
+  r.confidence,
+  r.action,
   r.h3_selected_ids,
   r.h3_option_order,
   r.h3_slot_states,
@@ -85,19 +98,19 @@ select
   r.response_ms
 from public.scopeproof_sessions s
 join public.scopeproof_responses r using (session_id)
-where s.stimulus_set = 'study12-zh-cn-v0.6'
+where s.stimulus_set = 'study12-zh-cn-v0.7'
   and s.status = 'complete'
   and s.participant_id !~ '^(TEST|REVIEW|PROBE)'
 order by s.participant_id, r.position;
 ```
 
-把下载文件保存为 `private/responses_v06.csv`，然后运行：
+把下载文件保存为 `private/responses_v07.csv`，然后运行：
 
 ```bash
-python3 tools/prepare_h3_analysis.py private/responses_v06.csv
+python3 tools/prepare_h3_analysis.py private/responses_v07.csv
 ```
 
-脚本默认排除 `TEST`、`REVIEW`、`PROBE` 前缀，并要求每位参与者恰好有 12 题。H3 的正式模型、次要指标和探索性分析见 `H3_MEASUREMENT_V06_ZH.md`。
+脚本默认排除 `TEST`、`REVIEW`、`PROBE` 前缀，并要求每位参与者恰好有 12 题。H3 的正式模型、次要指标和探索性分析见 `H3_MEASUREMENT_V07_ZH.md`。
 
 ## 版本规则
 
