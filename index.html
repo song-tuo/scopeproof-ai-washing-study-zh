@@ -24,9 +24,21 @@
   </header>
 
   <main>
+    <section id="entry-screen" class="narrow-page hidden">
+      <p class="kicker">开始实验</p>
+      <h1>请输入回响用户编号</h1>
+      <p class="lead">请完整填写回响数据提供给您的用户编号。这个编号只用来核对答卷和发放报酬。</p>
+      <form id="participant-form" novalidate>
+        <label class="text-label" for="participant-input">回响用户编号</label>
+        <input id="participant-input" class="participant-input" name="participant" type="text" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" required>
+        <p id="participant-error" class="form-error hidden" role="alert"></p>
+        <button class="primary-button" type="submit">下一步</button>
+      </form>
+    </section>
+
     <section id="fatal-screen" class="narrow-page hidden" role="alert">
-      <p class="kicker">无法开始</p>
-      <h1>这个实验链接不完整</h1>
+      <p class="kicker">暂时无法开始</p>
+      <h1>页面设置需要检查</h1>
       <p id="fatal-message" class="lead"></p>
     </section>
 
@@ -196,7 +208,7 @@
     </ol>
   </dialog>
 
-  <footer class="site-footer">ScopeProof · 中文实验材料 v0.8 · 所有产品与公司均为虚构</footer>
+  <footer class="site-footer">ScopeProof · 中文实验材料 v0.9 · 所有产品与公司均为虚构</footer>
 
   <script src="./config.js"></script>
   <script type="module" src="./app.js"></script>

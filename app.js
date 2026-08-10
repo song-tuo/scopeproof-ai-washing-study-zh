@@ -8,17 +8,17 @@ const requestedParticipant = (params.get("participant") || "").trim();
 const validConditions = new Set(["baseline", "scopeproof"]);
 const participantPattern = /^[A-Za-z0-9_-]{1,40}$/;
 
-const condition = validConditions.has(requestedCondition) ? requestedCondition : null;
-const participantId = participantPattern.test(requestedParticipant) ? requestedParticipant : null;
+let condition = validConditions.has(requestedCondition) ? requestedCondition : null;
+let participantId = participantPattern.test(requestedParticipant) ? requestedParticipant : null;
 const stimulusSet = config.stimulusSet || STIMULUS_SET;
 const huixiangReturnUrl = isValidHuixiangReturnUrl(config.huixiangReturnUrl)
   ? config.huixiangReturnUrl
   : null;
-const sessionStorageKey = participantId ? `scopeproof-session:${stimulusSet}:${participantId}` : "";
-const localLogKey = participantId ? `scopeproof-local-log:${stimulusSet}:${participantId}` : "";
+let sessionStorageKey = participantId ? `scopeproof-session:${stimulusSet}:${participantId}` : "";
+let localLogKey = participantId ? `scopeproof-local-log:${stimulusSet}:${participantId}` : "";
 
 const $ = (selector) => document.querySelector(selector);
-const screens = ["#fatal-screen", "#start-screen", "#study-screen", "#complete-screen"];
+const screens = ["#entry-screen", "#fatal-screen", "#start-screen", "#study-screen", "#complete-screen"];
 
 const statusMeta = {
   supported: {
@@ -84,6 +84,21 @@ function isValidHuixiangReturnUrl(value) {
 function showOnly(selector) {
   screens.forEach((screen) => $(screen).classList.toggle("hidden", screen !== selector));
   window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function setParticipantIdentity(value) {
+  participantId = value;
+  sessionStorageKey = `scopeproof-session:${stimulusSet}:${participantId}`;
+  localLogKey = `scopeproof-local-log:${stimulusSet}:${participantId}`;
+}
+
+function previewConditionForParticipant(value) {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 2 === 0 ? "baseline" : "scopeproof";
 }
 
 function randomToken(byteCount = 32) {
@@ -197,7 +212,7 @@ function storedSession() {
     if (
       stored?.sessionId
       && stored?.token
-      && stored?.condition === condition
+      && (!condition || stored?.condition === condition)
       && stored?.stimulusSet === stimulusSet
     ) return stored;
   } catch {
@@ -218,9 +233,10 @@ function persistSession() {
 }
 
 function applySession(payload, token) {
-  if (!payload || payload.stimulus_set !== stimulusSet || payload.condition !== condition) {
+  if (!payload || payload.stimulus_set !== stimulusSet || (condition && payload.condition !== condition)) {
     throw new Error("保存的进度属于另一个实验版本，请联系研究人员。");
   }
+  condition = payload.condition;
   state.sessionId = payload.session_id;
   state.token = token;
   state.order = payload.item_order;
@@ -239,6 +255,7 @@ async function startSession() {
   try {
     const saved = storedSession();
     if (previewMode) {
+      if (!condition) condition = previewConditionForParticipant(participantId);
       state.sessionId = `preview-${participantId}`;
       state.token = "preview";
       state.order = shuffled(CLAIMS.map((item) => item.id), participantId);
@@ -502,7 +519,7 @@ function responseValues() {
       slot.id,
       slot.state === "covered" ? "covered" : "non_covered",
     ])),
-    answerKeyVersion: "h3-set-v0.8",
+    answerKeyVersion: "h3-set-v0.9",
     h3ExplicitNone: form.get("h3-none") === "none",
     eligiblePriorityOptionIds: [...selectedOptionIds],
     selectedPriorityOptionId: form.get("priority"),
@@ -664,11 +681,6 @@ function downloadLocalLog() {
 }
 
 function initialize() {
-  if (!condition || !participantId) {
-    $("#fatal-message").textContent = "请使用研究人员发给您的专属链接。链接中必须包含正确的实验条件和参与编号。";
-    showOnly("#fatal-screen");
-    return;
-  }
   if (stimulusSet !== STIMULUS_SET) {
     $("#fatal-message").textContent = "网页设置与题目版本不一致，请联系研究人员。";
     showOnly("#fatal-screen");
@@ -684,9 +696,33 @@ function initialize() {
     showOnly("#fatal-screen");
     return;
   }
+  if (!participantId) {
+    if (requestedParticipant) {
+      $("#participant-error").textContent = "这个用户编号格式不正确。请完整填写，编号中不要使用空格。";
+      $("#participant-error").classList.remove("hidden");
+    }
+    showOnly("#entry-screen");
+    return;
+  }
   showOnly("#start-screen");
 }
 
+$("#participant-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const value = $("#participant-input").value.trim();
+  const error = $("#participant-error");
+  if (!participantPattern.test(value)) {
+    error.textContent = "请完整填写回响用户编号。编号中不能有空格。";
+    error.classList.remove("hidden");
+    return;
+  }
+  error.classList.add("hidden");
+  setParticipantIdentity(value);
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("participant", value);
+  window.history.replaceState(null, "", nextUrl);
+  showOnly("#start-screen");
+});
 $("#start-button").addEventListener("click", startSession);
 $("#response-form").addEventListener("submit", submitResponse);
 $("#response-form").addEventListener("change", updateSubmitState);

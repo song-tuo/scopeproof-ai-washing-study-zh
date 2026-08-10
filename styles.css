@@ -173,6 +173,25 @@ h3 { font-size: 22px; }
 .plain-note h2 { margin-bottom: 6px; font-size: 23px; }
 .plain-note p { margin: 0; }
 
+.text-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 750;
+}
+.participant-input {
+  width: 100%;
+  min-height: 58px;
+  margin-bottom: 18px;
+  padding: 11px 14px;
+  border: var(--border-strong);
+  border-radius: var(--radius-row);
+  background: var(--white);
+  color: var(--slate);
+  font-family: var(--mono);
+  font-size: 20px;
+}
+.participant-input:focus { border-color: var(--clay-dark); }
+
 .primary-button, .secondary-button {
   min-height: 56px;
   display: inline-flex;

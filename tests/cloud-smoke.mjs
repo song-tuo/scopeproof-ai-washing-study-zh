@@ -38,13 +38,14 @@ const order = CLAIMS.map((claim) => claim.id);
 const session = await rpc("create_scopeproof_session", {
   p_token: token,
   p_participant_id: participant,
-  p_condition: "scopeproof",
+  p_condition: null,
   p_stimulus_set: STIMULUS_SET,
   p_item_order: order,
   p_user_agent: "ScopeProof cloud smoke test",
   p_viewport_width: 1440,
   p_viewport_height: 1000,
 });
+assert.ok(["baseline", "scopeproof"].includes(session.condition));
 
 await rpc("save_scopeproof_event", {
   p_session_id: session.session_id,
@@ -98,4 +99,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log("PASS: v0.8 set-valued H3 completed 12 cloud items; direct table read remained blocked");
+console.log(`PASS: v0.9 auto-assigned ${session.condition}, completed 12 cloud items, and blocked direct table reads`);

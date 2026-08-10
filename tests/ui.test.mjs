@@ -60,7 +60,7 @@ async function answerOne(page) {
   await boxes.nth(1).uncheck();
   assert.equal(await page.locator("#priority-fieldset").isVisible(), false);
   assert.equal(await page.locator('#priority-choices input[type="radio"]:checked').count(), 1);
-  await page.screenshot({ path: resolve(artifacts, "desktop-scopeproof-h3-v08.png"), fullPage: true });
+  await page.screenshot({ path: resolve(artifacts, "desktop-scopeproof-h3-v09.png"), fullPage: true });
   const save = page.getByRole("button", { name: "保存本题并继续" });
   assert.equal(await save.isEnabled(), false);
   await page.locator("#truth-slider").fill("70");
@@ -98,7 +98,7 @@ try {
   assert.equal(submit.payload.confidenceTouched, true);
   assert.equal(submit.payload.truthProbability, 70);
   assert.equal(submit.payload.confidence, 80);
-  assert.equal(submit.payload.answerKeyVersion, "h3-set-v0.8");
+  assert.equal(submit.payload.answerKeyVersion, "h3-set-v0.9");
   assert.equal(submit.payload.optionOrder.length, 4);
   assert.equal(submit.payload.selectedOptionIds.length, 1);
   assert.equal(submit.payload.eligiblePriorityOptionIds.length, 1);
@@ -107,7 +107,7 @@ try {
   await assertNoOverflow(desktop);
   assert.equal(await desktop.getByText("题目数量", { exact: true }).count(), 0);
   assert.equal(await desktop.getByText("参与编号", { exact: true }).count(), 0);
-  await desktop.screenshot({ path: resolve(artifacts, "desktop-scopeproof-v08.png"), fullPage: true });
+  await desktop.screenshot({ path: resolve(artifacts, "desktop-scopeproof-v09.png"), fullPage: true });
 
   const baseline = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await baseline.goto(`${baseUrl}/?preview=1&condition=baseline&participant=TEST-B`);
@@ -123,7 +123,7 @@ try {
   assert.equal(await baseline.locator('#h3-set-choices input[type="checkbox"]:checked').count(), 0);
   assert.equal(await baseline.locator("#priority-fieldset").isVisible(), false);
   await assertNoOverflow(baseline);
-  await baseline.screenshot({ path: resolve(artifacts, "desktop-baseline-v08.png"), fullPage: true });
+  await baseline.screenshot({ path: resolve(artifacts, "desktop-baseline-v09.png"), fullPage: true });
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(`${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-M`);
@@ -132,10 +132,19 @@ try {
   await mobile.getByRole("heading", { name: "只根据本页资料判断" }).waitFor();
   assert.equal(await mobile.locator("#save-button").evaluate((element) => getComputedStyle(element).minHeight), "56px");
   await assertNoOverflow(mobile);
-  await mobile.screenshot({ path: resolve(artifacts, "mobile-scopeproof-v08.png"), fullPage: true });
+  await mobile.screenshot({ path: resolve(artifacts, "mobile-scopeproof-v09.png"), fullPage: true });
+
+  const entry = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await entry.goto(`${baseUrl}/?preview=1`);
+  await entry.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
+  await entry.screenshot({ path: resolve(artifacts, "mobile-participant-entry-v09.png"), fullPage: true });
+  await entry.getByLabel("回响用户编号").fill("TEST-ENTRY-V09");
+  await entry.getByRole("button", { name: "下一步" }).click();
+  await entry.getByRole("heading", { name: "请帮我们判断人工智能产品的宣传资料" }).waitFor();
+  await assertNoOverflow(entry);
 
   const previewCompletion = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const previewUrl = `${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-COMPLETE-V08`;
+  const previewUrl = `${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-COMPLETE-V09`;
   await previewCompletion.goto(previewUrl);
   await startStudy(previewCompletion);
   for (let index = 0; index < 12; index += 1) {
@@ -153,16 +162,17 @@ try {
   assert.equal(await previewCompletion.getByRole("link", { name: "立即返回回响数据" }).isVisible(), false);
   assert.equal(await previewCompletion.locator("#completion-code").count(), 0);
   assert.equal(await previewCompletion.getByText("谢谢您的认真作答", { exact: true }).count(), 0);
-  await previewCompletion.screenshot({ path: resolve(artifacts, "mobile-preview-completion-v08.png"), fullPage: true });
+  await previewCompletion.screenshot({ path: resolve(artifacts, "mobile-preview-completion-v09.png"), fullPage: true });
   await previewCompletion.waitForTimeout(1500);
   assert.equal(previewCompletion.url(), previewUrl);
   await assertNoOverflow(previewCompletion);
 
   const invalid = await browser.newPage({ viewport: { width: 900, height: 700 } });
-  await invalid.goto(`${baseUrl}/?condition=baselien&participant=TEST-X`);
-  await invalid.getByRole("heading", { name: "这个实验链接不完整" }).waitFor();
+  await invalid.goto(`${baseUrl}/?participant=contains%20space`);
+  await invalid.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
+  assert.equal(await invalid.locator("#participant-error").isVisible(), true);
 
-  console.log("PASS: desktop, baseline, mobile, v0.8 preview completion, large controls, and strict links");
+  console.log("PASS: v0.9 participant entry, desktop, baseline, mobile, preview completion, and strict input");
 } finally {
   await browser.close();
   server.kill("SIGTERM");
