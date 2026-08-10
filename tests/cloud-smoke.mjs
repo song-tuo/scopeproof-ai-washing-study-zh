@@ -99,4 +99,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log(`PASS: v0.9 auto-assigned ${session.condition}, completed 12 cloud items, and blocked direct table reads`);
+console.log(`PASS: v1.0 auto-assigned ${session.condition}, completed 12 cloud items, and blocked direct table reads`);

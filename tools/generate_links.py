@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate optional preassigned Huixiang participant URLs for ScopeProof v0.9."""
+"""Generate optional preassigned Huixiang participant URLs for ScopeProof v1.0."""
 
 from __future__ import annotations
 

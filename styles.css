@@ -173,6 +173,35 @@ h3 { font-size: 22px; }
 .plain-note h2 { margin-bottom: 6px; font-size: 23px; }
 .plain-note p { margin: 0; }
 
+.practice-box {
+  margin: 34px 0;
+  padding: 26px;
+  border: var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--white);
+}
+.practice-box h2 { font-size: 25px; }
+.practice-example {
+  margin: 20px 0;
+  padding: 18px 20px;
+  border-left: 5px solid var(--clay);
+  background: var(--clay-soft);
+}
+.practice-example p { margin: 0; }
+.practice-example p + p { margin-top: 12px; }
+.practice-fieldset { margin: 0; padding: 0; border: 0; }
+.practice-fieldset legend { margin-bottom: 12px; font-weight: 750; }
+.practice-feedback {
+  min-height: 58px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--gray-300);
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+.practice-feedback.correct { border-left-color: var(--olive); background: var(--olive-soft); color: var(--olive); font-weight: 700; }
+.practice-feedback.incorrect { border-left-color: var(--warning); background: var(--warning-soft); color: var(--warning); font-weight: 700; }
+
 .text-label {
   display: block;
   margin-bottom: 8px;
@@ -438,6 +467,8 @@ dialog li + li { margin-top: 12px; }
   .intro-band > div { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 17px 8px; }
   .intro-band > div + div { border-top: var(--border); border-left: 0; }
   .intro-band span { margin: 0; }
+  .practice-box { padding: 21px 18px; }
+  .practice-example { padding: 16px; }
   .study-page { width: min(100% - 20px, 1500px); padding-top: 18px; }
   .progress-row { align-items: start; }
   .progress-row > div { width: 100%; }

@@ -622,20 +622,20 @@ grant execute on function public.save_scopeproof_response(
   text, text[], text[], boolean, text[], text, text[], integer, integer, uuid, timestamptz
 ) to anon, authenticated;
 
--- Apply the current v0.9 study contract after the v0.6 schema.
--- ScopeProof 中文研究 v0.9：基础网址先收集回响用户编号，再由数据库平衡分组。
+-- Apply the current v1.0 study contract after the v0.6 schema.
+-- ScopeProof 中文研究 v1.0：加入强制理解练习并统一正式题目用语。
 
 alter table public.scopeproof_sessions
   drop constraint if exists scopeproof_sessions_stimulus_set_check;
 alter table public.scopeproof_sessions
   add constraint scopeproof_sessions_stimulus_set_check
-  check (stimulus_set in ('study12-zh-cn-v0.5', 'study12-zh-cn-v0.6', 'study12-zh-cn-v0.7', 'study12-zh-cn-v0.8', 'study12-zh-cn-v0.9'));
+  check (stimulus_set in ('study12-zh-cn-v0.5', 'study12-zh-cn-v0.6', 'study12-zh-cn-v0.7', 'study12-zh-cn-v0.8', 'study12-zh-cn-v0.9', 'study12-zh-cn-v1.0'));
 
 alter table public.scopeproof_responses
   drop constraint if exists scopeproof_responses_h3_answer_key_version_check;
 alter table public.scopeproof_responses
   add constraint scopeproof_responses_h3_answer_key_version_check
-  check (h3_answer_key_version is null or h3_answer_key_version in ('h3-set-v0.6', 'h3-set-v0.7', 'h3-set-v0.8', 'h3-set-v0.9'));
+  check (h3_answer_key_version is null or h3_answer_key_version in ('h3-set-v0.6', 'h3-set-v0.7', 'h3-set-v0.8', 'h3-set-v0.9', 'h3-set-v1.0'));
 
 create or replace function public.create_scopeproof_session(
   p_token text,
@@ -661,7 +661,7 @@ declare
 begin
   if p_token !~ '^[0-9a-f]{64}$' then raise exception 'invalid session token'; end if;
   if p_participant_id !~ '^[A-Za-z0-9_-]{1,40}$' then raise exception 'invalid participant id'; end if;
-  if p_stimulus_set <> 'study12-zh-cn-v0.9' then raise exception 'invalid stimulus set'; end if;
+  if p_stimulus_set <> 'study12-zh-cn-v1.0' then raise exception 'invalid stimulus set'; end if;
   if array_length(p_item_order, 1) <> 12
     or (select count(distinct item) from unnest(p_item_order) as item) <> 12
     or exists (select 1 from unnest(p_item_order) as item where not (item = any(v_allowed)))
@@ -673,7 +673,7 @@ begin
   end if;
 
   if p_condition is null then
-    perform pg_advisory_xact_lock(202608101009);
+    perform pg_advisory_xact_lock(202608101200);
     select case
       when count(*) filter (where condition = 'baseline')
         <= count(*) filter (where condition = 'scopeproof')
@@ -682,7 +682,7 @@ begin
     end
     into v_condition
     from public.scopeproof_sessions
-    where stimulus_set = 'study12-zh-cn-v0.9';
+    where stimulus_set = 'study12-zh-cn-v1.0';
   elsif p_condition in ('baseline', 'scopeproof') then
     v_condition := p_condition;
   else
@@ -783,8 +783,9 @@ begin
   end if;
 
   if v_session.status <> 'active' then raise exception 'session not active'; end if;
-  if v_session.stimulus_set not in ('study12-zh-cn-v0.6', 'study12-zh-cn-v0.7', 'study12-zh-cn-v0.8', 'study12-zh-cn-v0.9') then raise exception 'wrong response version'; end if;
+  if v_session.stimulus_set not in ('study12-zh-cn-v0.6', 'study12-zh-cn-v0.7', 'study12-zh-cn-v0.8', 'study12-zh-cn-v0.9', 'study12-zh-cn-v1.0') then raise exception 'wrong response version'; end if;
   v_answer_key_version := case
+    when v_session.stimulus_set = 'study12-zh-cn-v1.0' then 'h3-set-v1.0'
     when v_session.stimulus_set = 'study12-zh-cn-v0.9' then 'h3-set-v0.9'
     when v_session.stimulus_set = 'study12-zh-cn-v0.8' then 'h3-set-v0.8'
     when v_session.stimulus_set = 'study12-zh-cn-v0.7' then 'h3-set-v0.7'

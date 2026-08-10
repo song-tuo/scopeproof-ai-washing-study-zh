@@ -40,12 +40,19 @@ async function assertNoOverflow(page) {
 }
 
 async function startStudy(page) {
-  await page.getByRole("button", { name: "我明白了，开始答题" }).click();
+  const start = page.getByRole("button", { name: "练习答对后开始" });
+  assert.equal(await start.isEnabled(), false);
+  await page.getByRole("radio", { name: "资料与宣传不一致，说明宣传不对", exact: true }).check();
+  await page.getByText("还不能说宣传不对", { exact: false }).waitFor();
+  assert.equal(await start.isEnabled(), false);
+  await page.getByRole("radio", { name: "资料还不够，现在不能支持商家的整句话", exact: true }).check();
+  await page.getByText("答对了。资料只说明水壶能烧水", { exact: false }).waitFor();
+  await page.getByRole("button", { name: "开始正式答题" }).click();
   await page.getByText("第 1 条，共 12 条", { exact: true }).waitFor();
 }
 
 async function answerOne(page) {
-  await page.getByRole("radio", { name: "这些资料能说明这句话", exact: true }).check();
+  await page.getByRole("radio", { name: "资料足够，能支持商家的整句话", exact: true }).check();
   await page.getByRole("radio", { name: "先请商家提供更多资料", exact: true }).check();
   const boxes = page.locator('#h3-set-choices input[type="checkbox"]');
   await boxes.first().check();
@@ -60,7 +67,7 @@ async function answerOne(page) {
   await boxes.nth(1).uncheck();
   assert.equal(await page.locator("#priority-fieldset").isVisible(), false);
   assert.equal(await page.locator('#priority-choices input[type="radio"]:checked').count(), 1);
-  await page.screenshot({ path: resolve(artifacts, "desktop-scopeproof-h3-v09.png"), fullPage: true });
+  await page.screenshot({ path: resolve(artifacts, "desktop-scopeproof-h3-v10.png"), fullPage: true });
   const save = page.getByRole("button", { name: "保存本题并继续" });
   assert.equal(await save.isEnabled(), false);
   await page.locator("#truth-slider").fill("70");
@@ -77,7 +84,7 @@ const browser = await chromium.launch({ headless: true, executablePath: chrome }
 try {
   const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await desktop.goto(`${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-S`);
-  await desktop.getByRole("heading", { name: "请帮我们判断人工智能产品的宣传资料" }).waitFor();
+  await desktop.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
   assert.equal(await desktop.locator("body").evaluate((element) => getComputedStyle(element).fontSize), "18px");
   await desktop.getByRole("button", { name: "查看答题说明" }).click();
   assert.equal(await desktop.getByRole("dialog").isVisible(), true);
@@ -98,7 +105,7 @@ try {
   assert.equal(submit.payload.confidenceTouched, true);
   assert.equal(submit.payload.truthProbability, 70);
   assert.equal(submit.payload.confidence, 80);
-  assert.equal(submit.payload.answerKeyVersion, "h3-set-v0.9");
+  assert.equal(submit.payload.answerKeyVersion, "h3-set-v1.0");
   assert.equal(submit.payload.optionOrder.length, 4);
   assert.equal(submit.payload.selectedOptionIds.length, 1);
   assert.equal(submit.payload.eligiblePriorityOptionIds.length, 1);
@@ -107,7 +114,7 @@ try {
   await assertNoOverflow(desktop);
   assert.equal(await desktop.getByText("题目数量", { exact: true }).count(), 0);
   assert.equal(await desktop.getByText("参与编号", { exact: true }).count(), 0);
-  await desktop.screenshot({ path: resolve(artifacts, "desktop-scopeproof-v09.png"), fullPage: true });
+  await desktop.screenshot({ path: resolve(artifacts, "desktop-scopeproof-v10.png"), fullPage: true });
 
   const baseline = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await baseline.goto(`${baseUrl}/?preview=1&condition=baseline&participant=TEST-B`);
@@ -123,7 +130,7 @@ try {
   assert.equal(await baseline.locator('#h3-set-choices input[type="checkbox"]:checked').count(), 0);
   assert.equal(await baseline.locator("#priority-fieldset").isVisible(), false);
   await assertNoOverflow(baseline);
-  await baseline.screenshot({ path: resolve(artifacts, "desktop-baseline-v09.png"), fullPage: true });
+  await baseline.screenshot({ path: resolve(artifacts, "desktop-baseline-v10.png"), fullPage: true });
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(`${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-M`);
@@ -132,23 +139,24 @@ try {
   await mobile.getByRole("heading", { name: "只根据本页资料判断" }).waitFor();
   assert.equal(await mobile.locator("#save-button").evaluate((element) => getComputedStyle(element).minHeight), "56px");
   await assertNoOverflow(mobile);
-  await mobile.screenshot({ path: resolve(artifacts, "mobile-scopeproof-v09.png"), fullPage: true });
+  await mobile.screenshot({ path: resolve(artifacts, "mobile-scopeproof-v10.png"), fullPage: true });
 
   const entry = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await entry.goto(`${baseUrl}/?preview=1`);
   await entry.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
-  await entry.screenshot({ path: resolve(artifacts, "mobile-participant-entry-v09.png"), fullPage: true });
-  await entry.getByLabel("回响用户编号").fill("TEST-ENTRY-V09");
+  await entry.screenshot({ path: resolve(artifacts, "mobile-participant-entry-v10.png"), fullPage: true });
+  await entry.getByLabel("回响用户编号").fill("TEST-ENTRY-V10");
   await entry.getByRole("button", { name: "下一步" }).click();
-  await entry.getByRole("heading", { name: "请帮我们判断人工智能产品的宣传资料" }).waitFor();
+  await entry.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
   await assertNoOverflow(entry);
+  await entry.screenshot({ path: resolve(artifacts, "mobile-practice-v10.png"), fullPage: true });
 
   const previewCompletion = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const previewUrl = `${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-COMPLETE-V09`;
+  const previewUrl = `${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-COMPLETE-V10`;
   await previewCompletion.goto(previewUrl);
   await startStudy(previewCompletion);
   for (let index = 0; index < 12; index += 1) {
-    await previewCompletion.getByRole("radio", { name: "现有资料还说不清", exact: true }).check();
+    await previewCompletion.getByRole("radio", { name: "资料还不够，现在不能支持商家的整句话", exact: true }).check();
     await previewCompletion.locator("#truth-slider").fill("50");
     await previewCompletion.locator("#confidence-slider").fill("70");
     await previewCompletion.getByRole("radio", { name: "先请商家提供更多资料", exact: true }).check();
@@ -162,7 +170,7 @@ try {
   assert.equal(await previewCompletion.getByRole("link", { name: "立即返回回响数据" }).isVisible(), false);
   assert.equal(await previewCompletion.locator("#completion-code").count(), 0);
   assert.equal(await previewCompletion.getByText("谢谢您的认真作答", { exact: true }).count(), 0);
-  await previewCompletion.screenshot({ path: resolve(artifacts, "mobile-preview-completion-v09.png"), fullPage: true });
+  await previewCompletion.screenshot({ path: resolve(artifacts, "mobile-preview-completion-v10.png"), fullPage: true });
   await previewCompletion.waitForTimeout(1500);
   assert.equal(previewCompletion.url(), previewUrl);
   await assertNoOverflow(previewCompletion);
@@ -172,7 +180,7 @@ try {
   await invalid.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
   assert.equal(await invalid.locator("#participant-error").isVisible(), true);
 
-  console.log("PASS: v0.9 participant entry, desktop, baseline, mobile, preview completion, and strict input");
+  console.log("PASS: v1.0 practice gate, participant entry, desktop, mobile, and preview completion");
 } finally {
   await browser.close();
   server.kill("SIGTERM");

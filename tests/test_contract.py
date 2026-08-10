@@ -41,7 +41,7 @@ def walk_keys(value):
 
 def main() -> int:
     version, claims = load_stimuli()
-    assert version == "study12-zh-cn-v0.9"
+    assert version == "study12-zh-cn-v1.0"
     assert len(claims) == 12
     assert len({claim["id"] for claim in claims}) == 12
     assert Counter(claim["status"] for claim in claims) == {
@@ -156,8 +156,11 @@ def main() -> int:
     assert 'lang="zh-CN"' in html
     assert 'name="viewport"' in html
     assert "只根据本页资料判断" in html
-    assert "不要猜商家手里" in html
+    assert "我们不问商家是不是故意说谎" in html
     assert "尚未选择" in html
+    assert 'class="practice-box"' in html
+    assert 'name="practice" value="insufficient"' in html
+    assert 'id="start-button" class="primary-button" type="button" disabled' in html
     assert 'id="h3-set-choices"' in html
     assert 'type="checkbox" name="h3-none"' in html
     assert 'id="priority-fieldset"' in html
@@ -173,14 +176,14 @@ def main() -> int:
         assert removed_text not in html, removed_text
 
     app = (ROOT / "app.js").read_text(encoding="utf-8")
-    assert 'answerKeyVersion: "h3-set-v0.9"' in app
+    assert 'answerKeyVersion: "h3-set-v1.0"' in app
     assert "selectedOptionIds" in app
     assert "priorityOptionOrder" in app
     assert "window.location.replace(huixiangReturnUrl)" in app
     assert "isValidHuixiangReturnUrl" in app
     assert "setParticipantIdentity" in app
 
-    h3_doc = (ROOT / "H3_MEASUREMENT_V09_ZH.md").read_text(encoding="utf-8")
+    h3_doc = (ROOT / "H3_MEASUREMENT_V10_ZH.md").read_text(encoding="utf-8")
     assert "H3 是确认性的过程/操纵指标，不是因果中介" in h3_doc
     assert "不报告间接效应" in h3_doc
     assert "同一屏" not in h3_doc
@@ -198,12 +201,12 @@ def main() -> int:
     assert "confidence_touched boolean not null check (confidence_touched)" in sql
     assert "h3_selected_ids text[]" in sql
     assert "h3_slot_states jsonb" in sql
-    assert "h3-set-v0.9" in sql
-    assert "pg_advisory_xact_lock(202608101009)" in sql
+    assert "h3-set-v1.0" in sql
+    assert "pg_advisory_xact_lock(202608101200)" in sql
     assert "invalid H3 option order" in sql
     assert not re.search(r"grant\s+(select|insert|update|delete).*scopeproof_", sql, re.I)
 
-    migration = (ROOT / "supabase/migrations/20260810100000_v09_participant_entry.sql").read_text(encoding="utf-8")
+    migration = (ROOT / "supabase/migrations/20260810120000_v10_comprehension_practice.sql").read_text(encoding="utf-8")
     server_states = {
         item_id: json.loads(raw)
         for item_id, raw in re.findall(r"when '([^']+)' then '(\{[^']+\})'::jsonb", migration)

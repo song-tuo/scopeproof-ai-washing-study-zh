@@ -63,6 +63,8 @@ const state = {
   priorityAutoFilled: false,
   saving: false,
   returnScheduled: false,
+  practicePassed: false,
+  practiceAttempts: 0,
 };
 
 function isValidHuixiangReturnUrl(value) {
@@ -177,7 +179,7 @@ async function rpc(name, body) {
   if (!response.ok) {
     const rawMessage = String(payload?.message || "");
     if (/participant.*used|duplicate|unique/i.test(rawMessage)) {
-      throw new Error("这个参与编号已经使用过。请联系研究人员领取新的链接。");
+      throw new Error("这个回响用户编号已经使用过。请联系研究人员。");
     }
     throw new Error("暂时无法连接云端。请检查网络后再试。");
   }
@@ -248,6 +250,11 @@ function applySession(payload, token) {
 async function startSession() {
   const button = $("#start-button");
   const error = $("#start-error");
+  if (!state.practicePassed) {
+    error.textContent = "请先完成上面的练习题。";
+    error.classList.remove("hidden");
+    return;
+  }
   button.disabled = true;
   button.textContent = "正在连接，请稍候";
   error.classList.add("hidden");
@@ -298,7 +305,7 @@ async function startSession() {
     error.classList.remove("hidden");
   } finally {
     button.disabled = false;
-    button.textContent = "我明白了，开始答题";
+    button.textContent = state.practicePassed ? "开始正式答题" : "练习答对后开始";
   }
 }
 
@@ -519,7 +526,7 @@ function responseValues() {
       slot.id,
       slot.state === "covered" ? "covered" : "non_covered",
     ])),
-    answerKeyVersion: "h3-set-v0.9",
+    answerKeyVersion: "h3-set-v1.0",
     h3ExplicitNone: form.get("h3-none") === "none",
     eligiblePriorityOptionIds: [...selectedOptionIds],
     selectedPriorityOptionId: form.get("priority"),
@@ -722,6 +729,28 @@ $("#participant-form").addEventListener("submit", (event) => {
   nextUrl.searchParams.set("participant", value);
   window.history.replaceState(null, "", nextUrl);
   showOnly("#start-screen");
+});
+document.querySelectorAll('input[name="practice"]').forEach((input) => {
+  input.addEventListener("change", (event) => {
+    const feedback = $("#practice-feedback");
+    const button = $("#start-button");
+    state.practiceAttempts += 1;
+    state.practicePassed = event.target.value === "insufficient";
+    feedback.classList.toggle("correct", state.practicePassed);
+    feedback.classList.toggle("incorrect", !state.practicePassed);
+    if (state.practicePassed) {
+      feedback.textContent = "答对了。资料只说明水壶能烧水，没有说明 3 分钟和 1 升水，所以现在只能说资料还不够。";
+      button.disabled = false;
+      button.textContent = "开始正式答题";
+      $("#start-error").classList.add("hidden");
+    } else {
+      feedback.textContent = event.target.value === "refuted"
+        ? "还不能说宣传不对。现有资料没有反驳它，只是缺少 3 分钟和 1 升水的测试。请再选一次。"
+        : "说明书只证明水壶能烧水，没有证明 3 分钟和 1 升水。资料还不足以支持整句话，请再选一次。";
+      button.disabled = true;
+      button.textContent = "练习答对后开始";
+    }
+  });
 });
 $("#start-button").addEventListener("click", startSession);
 $("#response-form").addEventListener("submit", submitResponse);

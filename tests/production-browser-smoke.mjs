@@ -24,12 +24,13 @@ try {
   await page.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
   await page.getByLabel("回响用户编号").fill(participant);
   await page.getByRole("button", { name: "下一步" }).click();
-  await page.getByRole("heading", { name: "请帮我们判断人工智能产品的宣传资料" }).waitFor();
-  await page.getByRole("button", { name: "我明白了，开始答题" }).click();
+  await page.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
+  await page.getByRole("radio", { name: "资料还不够，现在不能支持商家的整句话", exact: true }).check();
+  await page.getByRole("button", { name: "开始正式答题" }).click();
   await page.getByText("第 1 条，共 12 条", { exact: true }).waitFor({ timeoutMs: 20000 });
 
   for (let index = 0; index < 12; index += 1) {
-    await page.getByRole("radio", { name: "现有资料还说不清", exact: true }).check();
+    await page.getByRole("radio", { name: "资料还不够，现在不能支持商家的整句话", exact: true }).check();
     await page.locator("#truth-slider").fill("50");
     await page.locator("#confidence-slider").fill("70");
     await page.getByRole("radio", { name: "先请商家提供更多资料", exact: true }).check();

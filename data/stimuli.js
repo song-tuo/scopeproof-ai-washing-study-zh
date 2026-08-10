@@ -1,4 +1,4 @@
-export const STIMULUS_SET = "study12-zh-cn-v0.9";
+export const STIMULUS_SET = "study12-zh-cn-v1.0";
 
 export const CLAIMS = [
   {

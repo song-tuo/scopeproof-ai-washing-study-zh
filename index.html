@@ -44,21 +44,39 @@
 
     <section id="start-screen" class="narrow-page hidden">
       <p class="kicker">开始前请先阅读</p>
-      <h1>请帮我们判断人工智能产品的宣传资料</h1>
-      <p class="lead">您将看到一些虚构的产品宣传，以及页面上公开给出的资料。请只根据这些资料作答，不需要懂电脑技术。</p>
+      <h1>请判断本页资料够不够支持商家的宣传</h1>
+      <p class="lead">您将看到一些虚构的产品宣传，以及页面上公开给出的资料。我们不问商家是不是故意说谎，只问本页资料能不能支持商家的整句话。</p>
 
       <div class="intro-band" aria-label="答题步骤">
         <div><span>1</span><p><strong>看宣传</strong>先弄清商家说了什么。</p></div>
         <div><span>2</span><p><strong>看资料</strong>逐份打开页面提供的资料。</p></div>
-        <div><span>3</span><p><strong>作判断</strong>回答五组简短问题。</p></div>
+        <div><span>3</span><p><strong>作判断</strong>在“能支持、不一致、资料不够”中选择。</p></div>
       </div>
 
       <section class="plain-note">
-        <h2>请记住</h2>
-        <p>这里判断的不是商家有没有说谎，而是<strong>本页看得到的资料，能不能说明商家的宣传</strong>。不要猜商家手里可能还有什么资料。</p>
+        <h2>只记住这三条</h2>
+        <p><strong>全部要点都有资料支持</strong>，才选“资料能支持”；有资料与宣传相反，选“资料与宣传不一致”；只要还有重要内容没资料，选“资料还不够”。</p>
       </section>
 
-      <button id="start-button" class="primary-button" type="button">我明白了，开始答题</button>
+      <section class="practice-box" aria-labelledby="practice-title">
+        <p class="kicker">先做一道练习</p>
+        <h2 id="practice-title">看看您是否理解刚才的规则</h2>
+        <div class="practice-example">
+          <p><strong>商家说：</strong>“这个电水壶每次都能在 3 分钟内烧开 1 升水。”</p>
+          <p><strong>本页资料：</strong>说明书只写了“这个水壶可以烧水”，没有提供烧水时间和水量测试。</p>
+        </div>
+        <fieldset class="practice-fieldset">
+          <legend>只看这些资料，应该怎样判断？</legend>
+          <div class="choice-list">
+            <label><input type="radio" name="practice" value="supported"><span>资料足够，能支持商家的整句话</span></label>
+            <label><input type="radio" name="practice" value="refuted"><span>资料与宣传不一致，说明宣传不对</span></label>
+            <label><input type="radio" name="practice" value="insufficient"><span>资料还不够，现在不能支持商家的整句话</span></label>
+          </div>
+        </fieldset>
+        <p id="practice-feedback" class="practice-feedback" aria-live="polite">请选择一个答案。</p>
+      </section>
+
+      <button id="start-button" class="primary-button" type="button" disabled>练习答对后开始</button>
       <p id="start-error" class="form-error hidden" role="alert"></p>
     </section>
 
@@ -127,16 +145,16 @@
             </div>
 
             <fieldset>
-              <legend><span>1</span>这些资料能不能说明商家的宣传？</legend>
+              <legend><span>1</span>只看本页资料，哪一种判断最合适？</legend>
               <div class="choice-list" id="status-choices">
-                <label><input type="radio" name="status" value="supported"><span>这些资料能说明这句话</span></label>
-                <label><input type="radio" name="status" value="refuted"><span>这些资料显示这句话不对</span></label>
-                <label><input type="radio" name="status" value="insufficient"><span>现有资料还说不清</span></label>
+                <label><input type="radio" name="status" value="supported"><span>资料足够，能支持商家的整句话</span></label>
+                <label><input type="radio" name="status" value="refuted"><span>资料与宣传不一致，说明宣传不对</span></label>
+                <label><input type="radio" name="status" value="insufficient"><span>资料还不够，现在不能支持商家的整句话</span></label>
               </div>
             </fieldset>
 
             <fieldset class="slider-fieldset">
-              <legend><span>2</span>先不管资料够不够，您觉得这句宣传有多大可能是真的？</legend>
+              <legend><span>2</span>这题问您的个人估计：您觉得这句宣传有多大可能是真的？</legend>
               <output id="truth-output">尚未选择</output>
               <input id="truth-slider" class="untouched" type="range" min="0" max="100" step="5" value="50" aria-label="这句宣传可能为真的程度">
               <div class="range-labels"><span>0%<small>很不可能</small></span><span>100%<small>很可能</small></span></div>
@@ -161,13 +179,13 @@
             </fieldset>
 
             <fieldset>
-              <legend><span>5</span>商家宣传里的哪些要点，目前还没有得到本页资料的支持？</legend>
-              <p class="question-note">可能是资料还不够，也可能是资料显示宣传不对。请选择所有符合的项。</p>
+              <legend><span>5</span>下面哪些要点还不能由本页资料支持？</legend>
+              <p class="question-note">资料没有提到，或者资料与宣传不一致，都请选中。可以多选。</p>
               <div id="h3-set-choices" class="choice-list"></div>
               <div class="choice-list none-choice">
                 <label>
                   <input id="h3-none" type="checkbox" name="h3-none" value="none">
-                  <span><strong>这四个要点都已得到本页资料支持</strong></span>
+                  <span><strong>这四个要点都有资料支持</strong></span>
                 </label>
               </div>
             </fieldset>
@@ -208,7 +226,7 @@
     </ol>
   </dialog>
 
-  <footer class="site-footer">ScopeProof · 中文实验材料 v0.9 · 所有产品与公司均为虚构</footer>
+  <footer class="site-footer">ScopeProof · 中文实验材料 v1.0 · 所有产品与公司均为虚构</footer>
 
   <script src="./config.js"></script>
   <script type="module" src="./app.js"></script>
