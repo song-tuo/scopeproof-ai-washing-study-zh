@@ -20,7 +20,7 @@ def main() -> int:
         row = {
             "participant_id": "PILOT001",
             "condition": "scopeproof",
-            "stimulus_set": "study12-zh-cn-v0.7",
+            "stimulus_set": "study12-zh-cn-v0.8",
             "item_id": "P-I-02",
             "position": "0",
             "truth_probability": "50",
@@ -29,7 +29,7 @@ def main() -> int:
             "h3_selected_ids": "{capability,metric_scope}",
             "h3_option_order": "{object,metric_scope,capability,condition}",
             "h3_slot_states": '{"capability":"non_covered","object":"covered","condition":"covered","metric_scope":"non_covered"}',
-            "h3_answer_key_version": "h3-set-v0.7",
+            "h3_answer_key_version": "h3-set-v0.8",
             "h3_explicit_none": "false",
             "priority_eligible_ids": "{capability,metric_scope}",
             "priority_selected_id": "metric_scope",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a v0.7 response export into preregistered H3 analysis tables."""
+"""Convert a v0.8 response export into preregistered H3 analysis tables."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 
 SLOTS = ("capability", "object", "condition", "metric_scope")
-STIMULUS_SET = "study12-zh-cn-v0.7"
-ANSWER_KEY_VERSION = "h3-set-v0.7"
+STIMULUS_SET = "study12-zh-cn-v0.8"
+ANSWER_KEY_VERSION = "h3-set-v0.8"
 ITEM_STATUS = {
     "P-S-01": "supported",
     "P-S-04": "supported",
@@ -213,7 +213,7 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
         })
 
     if not slot_rows:
-        raise ValueError("No eligible v0.7 responses remained after filtering")
+        raise ValueError("No eligible v0.8 responses remained after filtering")
     if not allow_incomplete:
         incomplete = {participant: len(items) for participant, items in participant_items.items() if len(items) != 12}
         if incomplete:

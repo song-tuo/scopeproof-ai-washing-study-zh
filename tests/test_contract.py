@@ -41,7 +41,7 @@ def walk_keys(value):
 
 def main() -> int:
     version, claims = load_stimuli()
-    assert version == "study12-zh-cn-v0.7"
+    assert version == "study12-zh-cn-v0.8"
     assert len(claims) == 12
     assert len({claim["id"] for claim in claims}) == 12
     assert Counter(claim["status"] for claim in claims) == {
@@ -161,13 +161,21 @@ def main() -> int:
     assert 'id="h3-set-choices"' in html
     assert 'type="checkbox" name="h3-none"' in html
     assert 'id="priority-fieldset"' in html
+    assert 'id="huixiang-return"' in html
+    assert "202608102142" in html
+    assert 'id="completion-code"' not in html
+    assert 'class="session-facts"' not in html
+    for removed_text in ("题目数量", "大约用时", "参与编号", "全部完成", "谢谢您的认真作答", "12 条题目已经保存"):
+        assert removed_text not in html, removed_text
 
     app = (ROOT / "app.js").read_text(encoding="utf-8")
-    assert 'answerKeyVersion: "h3-set-v0.7"' in app
+    assert 'answerKeyVersion: "h3-set-v0.8"' in app
     assert "selectedOptionIds" in app
     assert "priorityOptionOrder" in app
+    assert "window.location.replace(huixiangReturnUrl)" in app
+    assert "isValidHuixiangReturnUrl" in app
 
-    h3_doc = (ROOT / "H3_MEASUREMENT_V07_ZH.md").read_text(encoding="utf-8")
+    h3_doc = (ROOT / "H3_MEASUREMENT_V08_ZH.md").read_text(encoding="utf-8")
     assert "H3 是确认性的过程/操纵指标，不是因果中介" in h3_doc
     assert "不报告间接效应" in h3_doc
     assert "同一屏" not in h3_doc
@@ -185,11 +193,11 @@ def main() -> int:
     assert "confidence_touched boolean not null check (confidence_touched)" in sql
     assert "h3_selected_ids text[]" in sql
     assert "h3_slot_states jsonb" in sql
-    assert "h3-set-v0.7" in sql
+    assert "h3-set-v0.8" in sql
     assert "invalid H3 option order" in sql
     assert not re.search(r"grant\s+(select|insert|update|delete).*scopeproof_", sql, re.I)
 
-    migration = (ROOT / "supabase/migrations/20260810060000_v07_wording_interaction.sql").read_text(encoding="utf-8")
+    migration = (ROOT / "supabase/migrations/20260810080000_v08_huixiang_return.sql").read_text(encoding="utf-8")
     server_states = {
         item_id: json.loads(raw)
         for item_id, raw in re.findall(r"when '([^']+)' then '(\{[^']+\})'::jsonb", migration)

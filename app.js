@@ -11,6 +11,9 @@ const participantPattern = /^[A-Za-z0-9_-]{1,40}$/;
 const condition = validConditions.has(requestedCondition) ? requestedCondition : null;
 const participantId = participantPattern.test(requestedParticipant) ? requestedParticipant : null;
 const stimulusSet = config.stimulusSet || STIMULUS_SET;
+const huixiangReturnUrl = isValidHuixiangReturnUrl(config.huixiangReturnUrl)
+  ? config.huixiangReturnUrl
+  : null;
 const sessionStorageKey = participantId ? `scopeproof-session:${stimulusSet}:${participantId}` : "";
 const localLogKey = participantId ? `scopeproof-local-log:${stimulusSet}:${participantId}` : "";
 
@@ -59,7 +62,24 @@ const state = {
   priorityOptionOrder: [],
   priorityAutoFilled: false,
   saving: false,
+  returnScheduled: false,
 };
+
+function isValidHuixiangReturnUrl(value) {
+  if (typeof value !== "string") return false;
+  try {
+    const outer = new URL(value);
+    const callback = new URL(outer.searchParams.get("url") || "");
+    return outer.protocol === "https:"
+      && outer.hostname === "www.huixiangdata.com"
+      && outer.pathname === "/transferPage"
+      && callback.protocol === "https:"
+      && callback.hostname === "www.huixiangdata.com"
+      && /^\/questionnaire\/api\/v1\/answer\/third\/callback\/submit\/\d+$/.test(callback.pathname);
+  } catch {
+    return false;
+  }
+}
 
 function showOnly(selector) {
   screens.forEach((screen) => $(screen).classList.toggle("hidden", screen !== selector));
@@ -482,7 +502,7 @@ function responseValues() {
       slot.id,
       slot.state === "covered" ? "covered" : "non_covered",
     ])),
-    answerKeyVersion: "h3-set-v0.7",
+    answerKeyVersion: "h3-set-v0.8",
     h3ExplicitNone: form.get("h3-none") === "none",
     eligiblePriorityOptionIds: [...selectedOptionIds],
     selectedPriorityOptionId: form.get("priority"),
@@ -588,18 +608,48 @@ async function submitResponse(event) {
 }
 
 function renderCompletion() {
-  $("#completion-code").textContent = state.completionCode || (previewMode ? "PREVIEW" : "------");
+  const kicker = $("#completion-kicker");
+  const title = $("#completion-title");
+  const message = $("#completion-message");
+  const platformReturn = $("#huixiang-return");
+  const note = $("#completion-note");
   const warning = $("#completion-warning");
   const download = $("#download-button");
   const hasLocalLog = Boolean(localStorage.getItem(localLogKey));
-  if (!previewMode && !state.completionCode) {
+
+  warning.classList.add("hidden");
+  download.classList.add("hidden");
+  platformReturn.classList.add("hidden");
+  note.classList.add("hidden");
+
+  if (previewMode) {
+    kicker.textContent = "预览结束";
+    title.textContent = "预览已经完成";
+    message.textContent = "这是预览模式，没有保存数据，也不会返回回响数据。";
+    if (hasLocalLog && params.get("researcher") === "1") download.classList.remove("hidden");
+  } else if (!state.completionCode) {
+    kicker.textContent = "需要确认";
+    title.textContent = "保存还没有确认";
+    message.textContent = "请先不要关闭页面，并联系研究人员。";
     warning.textContent = "云端完成状态尚未确认。请下载本机记录并联系研究人员。";
     warning.classList.remove("hidden");
     download.classList.remove("hidden");
-  } else if (hasLocalLog && params.get("researcher") === "1") {
-    download.classList.remove("hidden");
+  } else {
+    kicker.textContent = "正在返回";
+    title.textContent = "回答已经保存";
+    message.textContent = "页面正在返回回响数据，请稍候。";
+    platformReturn.href = huixiangReturnUrl;
+    platformReturn.classList.remove("hidden");
+    note.classList.remove("hidden");
+    if (hasLocalLog && params.get("researcher") === "1") download.classList.remove("hidden");
   }
+
   showOnly("#complete-screen");
+
+  if (!previewMode && state.completionCode && !state.returnScheduled) {
+    state.returnScheduled = true;
+    window.setTimeout(() => window.location.replace(huixiangReturnUrl), 1200);
+  }
 }
 
 function downloadLocalLog() {
@@ -629,7 +679,11 @@ function initialize() {
     showOnly("#fatal-screen");
     return;
   }
-  $("#participant-label").textContent = participantId;
+  if (!previewMode && !huixiangReturnUrl) {
+    $("#fatal-message").textContent = "回响数据返回地址尚未配置，请联系研究人员。";
+    showOnly("#fatal-screen");
+    return;
+  }
   showOnly("#start-screen");
 }
 

@@ -5,11 +5,21 @@ const baseUrl = process.env.SCOPEPROOF_PRODUCTION_URL
   || "https://song-tuo.github.io/scopeproof-ai-washing-study-zh/";
 const participant = `TEST-WEB-${Date.now()}`;
 const url = `${baseUrl}?condition=scopeproof&participant=${participant}`;
+const huixiangReturnUrl = "https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142";
 const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const browser = await chromium.launch({ headless: true, executablePath: chrome });
 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  let requestedReturnUrl = null;
+  await page.route("https://www.huixiangdata.com/**", async (route) => {
+    requestedReturnUrl = route.request().url();
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html; charset=utf-8",
+      body: "<!doctype html><html><body><h1>模拟回响接收页</h1></body></html>",
+    });
+  });
   await page.goto(url);
   await page.getByRole("heading", { name: "请帮我们判断人工智能产品的宣传资料" }).waitFor();
   await page.getByRole("button", { name: "我明白了，开始答题" }).click();
@@ -30,11 +40,15 @@ try {
     }
   }
 
-  await page.getByRole("heading", { name: "谢谢您的认真作答" }).waitFor({ timeoutMs: 20000 });
-  const completionCode = (await page.locator("#completion-code").textContent())?.trim() || "";
-  assert.match(completionCode, /^\d{6}$/);
+  await page.getByRole("heading", { name: "回答已经保存" }).waitFor({ timeoutMs: 20000 });
+  const returnLink = page.getByRole("link", { name: "立即返回回响数据" });
+  assert.equal(await returnLink.isVisible(), true);
+  assert.equal(await returnLink.getAttribute("href"), huixiangReturnUrl);
+  assert.equal(await page.locator("#completion-code").count(), 0);
   assert.equal(await page.locator("#upload-warning").isVisible(), false);
-  console.log("PASS: production GitHub Pages completed 12 items and received a cloud completion code");
+  await page.waitForURL("https://www.huixiangdata.com/**", { timeout: 5000 });
+  assert.equal(requestedReturnUrl, huixiangReturnUrl);
+  console.log("PASS: production saved 12 items, hid the internal completion code, and auto-returned to Huixiang");
 } finally {
   await browser.close();
 }

@@ -1,4 +1,4 @@
-# ScopeProof v0.7 研究者指南
+# ScopeProof v0.8 研究者指南
 
 ## 当前服务
 
@@ -6,8 +6,10 @@
 - 正式网页：`https://song-tuo.github.io/scopeproof-ai-washing-study-zh/`
 - Supabase 项目：`scopeproof-ai-washing-study-zh`
 - Supabase 项目编号：`mrrgljrezsoepwflbato`
-- 刺激版本：`study12-zh-cn-v0.7`
-- H3 答案键版本：`h3-set-v0.7`
+- 刺激版本：`study12-zh-cn-v0.8`
+- H3 答案键版本：`h3-set-v0.8`
+- 回响任务编号：`202608102142`
+- 回响返回地址：`https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142`
 
 数据库密码保存在本机钥匙串，服务名称为 `scopeproof-ai-washing-study-zh-db`。网页只包含公开 publishable key，不包含数据库密码或 secret/service-role key。
 
@@ -24,14 +26,23 @@ npm run test:production
 ```
 
 3. 等待 GitHub Pages 部署成功，并用手机流量打开正式网页。
-4. 使用 `TEST-D1` 完成一场正式网页测试，在 Supabase 中确认有 12 条 response。
-5. 生成 112 条平衡招募链接，目标取得 96 名有效完成者（每组 48 人）：
+4. 使用 `TEST-D1` 完成一场正式网页测试，在 Supabase 中确认有 12 条 response。生产测试会在浏览器内拦截回响网址，不会向回响提交测试完成状态。
+5. 从回响导出用户编号，一行一个编号或把编号放在 CSV 第一列，然后生成 112 条平衡招募链接，目标取得 96 名有效完成者（每组 48 人）：
 
 ```bash
-python3 tools/generate_links.py
+python3 tools/generate_links.py --ids-file private/huixiang_user_ids.csv
 ```
 
 6. 不要把 `private/`、答案键、service-role key 或导出的原始数据提交到 GitHub。
+
+## 回响匹配与完成确认
+
+- 每条专属链接只在 `participant` 参数中携带回响用户编号，例如 `?condition=baseline&participant=12345678`。
+- 网页不会显示用户编号，也不会要求参与者复制或填写完成码。
+- 只有第 12 条回答得到 Supabase 的完成确认后，网页才会自动返回回响数据。
+- 自动跳转失败时，参与者可点击“立即返回回响数据”。该按钮使用同一个固定回调地址，不附加完成码。
+- `preview=1` 不写数据库，也不会跳转或显示回响返回按钮。
+- Supabase 仍生成六位完成码作为内部完整性信号，不对参与者公开，也不用于回响匹配。
 
 ## 软启动与题量
 
@@ -65,7 +76,7 @@ order by started_at desc;
 
 正式分析排除编号以 `TEST`、`REVIEW` 或 `PROBE` 开头的场次，并且只保留：
 
-- `stimulus_set = 'study12-zh-cn-v0.7'`
+- `stimulus_set = 'study12-zh-cn-v0.8'`
 - `status = 'complete'`
 - `current_position = 12`
 - 恰好 12 条 response
@@ -98,19 +109,19 @@ select
   r.response_ms
 from public.scopeproof_sessions s
 join public.scopeproof_responses r using (session_id)
-where s.stimulus_set = 'study12-zh-cn-v0.7'
+where s.stimulus_set = 'study12-zh-cn-v0.8'
   and s.status = 'complete'
   and s.participant_id !~ '^(TEST|REVIEW|PROBE)'
 order by s.participant_id, r.position;
 ```
 
-把下载文件保存为 `private/responses_v07.csv`，然后运行：
+把下载文件保存为 `private/responses_v08.csv`，然后运行：
 
 ```bash
-python3 tools/prepare_h3_analysis.py private/responses_v07.csv
+python3 tools/prepare_h3_analysis.py private/responses_v08.csv
 ```
 
-脚本默认排除 `TEST`、`REVIEW`、`PROBE` 前缀，并要求每位参与者恰好有 12 题。H3 的正式模型、次要指标和探索性分析见 `H3_MEASUREMENT_V07_ZH.md`。
+脚本默认排除 `TEST`、`REVIEW`、`PROBE` 前缀，并要求每位参与者恰好有 12 题。H3 的正式模型、次要指标和探索性分析见 `H3_MEASUREMENT_V08_ZH.md`。
 
 ## 版本规则
 
@@ -120,5 +131,6 @@ python3 tools/prepare_h3_analysis.py private/responses_v07.csv
 2. `config.js` 的 `stimulusSet`
 3. Supabase 迁移中的版本约束
 4. 本地存储 key 所使用的版本
+5. 研究者指南中冻结的回响任务号
 
 不同版本的数据不得直接合并。

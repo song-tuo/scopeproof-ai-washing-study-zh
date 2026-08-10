@@ -33,7 +33,7 @@
     <section id="start-screen" class="narrow-page hidden">
       <p class="kicker">开始前请先阅读</p>
       <h1>请帮我们判断人工智能产品的宣传资料</h1>
-      <p class="lead">您将看到 12 条虚构的产品宣传，以及页面上公开给出的资料。请只根据这些资料作答，不需要懂电脑技术。</p>
+      <p class="lead">您将看到一些虚构的产品宣传，以及页面上公开给出的资料。请只根据这些资料作答，不需要懂电脑技术。</p>
 
       <div class="intro-band" aria-label="答题步骤">
         <div><span>1</span><p><strong>看宣传</strong>先弄清商家说了什么。</p></div>
@@ -45,12 +45,6 @@
         <h2>请记住</h2>
         <p>这里判断的不是商家有没有说谎，而是<strong>本页看得到的资料，能不能说明商家的宣传</strong>。不要猜商家手里可能还有什么资料。</p>
       </section>
-
-      <dl class="session-facts">
-        <div><dt>题目数量</dt><dd>12 条</dd></div>
-        <div><dt>大约用时</dt><dd>15 分钟</dd></div>
-        <div><dt>参与编号</dt><dd id="participant-label">读取中</dd></div>
-      </dl>
 
       <button id="start-button" class="primary-button" type="button">我明白了，开始答题</button>
       <p id="start-error" class="form-error hidden" role="alert"></p>
@@ -180,13 +174,11 @@
     </section>
 
     <section id="complete-screen" class="narrow-page hidden">
-      <p class="kicker">全部完成</p>
-      <h1>谢谢您的认真作答</h1>
-      <p class="lead">12 条题目已经保存。您可以关闭这个页面。</p>
-      <div class="completion-code">
-        <span>完成编号</span>
-        <strong id="completion-code">------</strong>
-      </div>
+      <p id="completion-kicker" class="kicker">正在返回</p>
+      <h1 id="completion-title">回答已经保存</h1>
+      <p id="completion-message" class="lead">页面正在返回回响数据，请稍候。</p>
+      <a id="huixiang-return" class="primary-button completion-return" href="https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142">立即返回回响数据</a>
+      <p id="completion-note" class="completion-note">如果页面没有自动跳转，请点击上面的按钮。</p>
       <p id="completion-warning" class="form-error hidden" role="alert"></p>
       <button id="download-button" class="secondary-button hidden" type="button">下载本机记录</button>
     </section>
@@ -204,7 +196,7 @@
     </ol>
   </dialog>
 
-  <footer class="site-footer">ScopeProof · 中文实验材料 v0.7 · 所有产品与公司均为虚构</footer>
+  <footer class="site-footer">ScopeProof · 中文实验材料 v0.8 · 所有产品与公司均为虚构</footer>
 
   <script src="./config.js"></script>
   <script type="module" src="./app.js"></script>

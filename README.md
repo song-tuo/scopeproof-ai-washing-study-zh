@@ -10,6 +10,7 @@
 - **两种实验条件：** 普通资料版与 ScopeProof 分项资料版。
 - **集合式 H3：** 参与者多选所有尚未得到资料支持的宣传要点，再做一个不计对错的优先核查选择。
 - **安全存储：** GitHub Pages 只负责网页；Supabase 通过带会话令牌的 RPC 收集数据，参与者不能直接读取数据表。
+- **回响自动确认：** 第 12 题写入云端后自动返回回响数据；平台只用开场专属链接中的用户编号匹配答卷，不要求复制完成码。
 - **隐藏研究标签：** 网页源码不包含声明真假或正确购买行动；H3 标准状态由服务器按题号再次生成并保存。
 
 页面风格参考 [Acme HTML Style](https://github.com/kaiychen9/acme-html-style/blob/main/README_zh.md)：象牙白底、陶土色强调、衬线标题、1.5px 边框和白色内容面板。为了照顾老年参与者，本项目把原规范的紧凑控件进一步放大。
@@ -41,7 +42,7 @@ npm run test:production
 - `npm test`：检查 12 条刺激、语言、隐藏答案、响应式样式和数据库权限。
 - `npm run test:ui`：用 Chrome 检查桌面普通版、桌面分项版和 390px 手机版。
 - `npm run test:cloud`：使用公开 publishable key 完成 12 题云端测试，并确认匿名用户不能直接读表。
-- `npm run test:production`：从正式 GitHub Pages 完成 12 题并取得云端完成编号。
+- `npm run test:production`：从正式 GitHub Pages 完成 12 题，并拦截验证回响自动返回地址，不向回响提交测试答卷。
 
 ## 目录
 
@@ -58,4 +59,4 @@ npm run test:production
 └── private/                  本地答案键，已被 Git 忽略
 ```
 
-正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`；H3 的模型与计分口径见 `H3_MEASUREMENT_V07_ZH.md`。
+正式招募、数据导出和版本冻结步骤见 `RESEARCHER_GUIDE_ZH.md`；H3 的模型与计分口径见 `H3_MEASUREMENT_V08_ZH.md`。
