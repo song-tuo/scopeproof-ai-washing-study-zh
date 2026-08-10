@@ -1,4 +1,4 @@
-# ScopeProof v1.0 研究者指南
+# ScopeProof 正式题目 v1.0 / 练习 v1.1 研究者指南
 
 ## 当前服务
 
@@ -8,6 +8,7 @@
 - Supabase 项目编号：`mrrgljrezsoepwflbato`
 - 刺激版本：`study12-zh-cn-v1.0`
 - H3 答案键版本：`h3-set-v1.0`
+- 练习版本：`practice-v1.1`
 - 回响任务编号：`202608102142`
 - 回响返回地址：`https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142`
 
@@ -41,10 +42,12 @@ python3 tools/generate_links.py --ids-file private/huixiang_user_ids.csv
 - 数据库使用事务锁，在创建会话时把无条件链接分配到当前人数较少的一组；人数相同时先分到普通版，下一人分到分项版。
 - 预先生成的专属链接仍可在 `participant` 和 `condition` 参数中固定编号与组别。
 - 用户编号只在第一步由参与者填写一次，进入说明页后不再显示；网页不会要求参与者复制或填写完成码。
-- 正式题目前必须答对电水壶练习题；答错时页面解释“缺少资料”和“资料反驳宣传”的区别，并要求重新选择。
+- 正式题目前必须答对两道生活化练习题。电水壶题教“缺少相关测试”，保温杯题教“同样条件下的结果与宣传相反”；答错可以重选，不会被自动退出。
+- 两道练习的先后顺序由参与编号确定性打乱。两题答对后，页面再次并排说明“资料还不够”和“资料与宣传不一致”，再开放正式答题。
 - 只有第 12 条回答得到 Supabase 的完成确认后，网页才会自动返回回响数据。
 - 自动跳转失败时，参与者可点击“立即返回回响数据”。该按钮使用同一个固定回调地址，不附加完成码。
 - `preview=1` 不写数据库，也不会跳转或显示回响返回按钮。
+- 在 `localhost`、`127.0.0.1` 或 `::1` 打开的页面会强制进入预览模式，即使网址没有 `preview=1`，也不会写入正式 Supabase。
 - Supabase 仍生成六位完成码作为内部完整性信号，不对参与者公开，也不用于回响匹配。
 
 ## 软启动与题量
@@ -84,6 +87,9 @@ order by started_at desc;
 - `current_position = 12`
 - 恰好 12 条 response
 - 两个 touched 字段都为 true
+- `practice_version = 'practice-v1.1'`，且练习摘要通过服务器校验
+
+练习总用时从说明页与第一道练习显示开始，到两题都答对为止，因此包含参与者阅读开场规则的时间。练习表现不用于主分析排除。预先固定一项敏感性分析：剔除**两题总尝试次数 >= 4**，或**练习总用时 < 8 秒**的参与者，重新运行主模型并与全样本结果并列报告。这个阈值只用于敏感性分析，不能在看过组间效果后改成主排除标准。
 
 ## 导出 H3 数据
 
@@ -95,6 +101,11 @@ select
   s.condition,
   s.stimulus_set,
   s.status as session_status,
+  se.payload->'practice_summary'->>'practice_version' as practice_version,
+  se.payload->'practice_summary'->'practice_attempts'->>'insufficient' as practice_insufficient_attempts,
+  se.payload->'practice_summary'->'practice_attempts'->>'refuted' as practice_refuted_attempts,
+  se.payload->'practice_summary'->>'practice_elapsed_ms' as practice_elapsed_ms,
+  se.payload->'practice_summary'->>'passed_both_first_try' as practice_passed_both_first_try,
   r.item_id,
   r.position,
   r.response_status,
@@ -112,6 +123,9 @@ select
   r.response_ms
 from public.scopeproof_sessions s
 join public.scopeproof_responses r using (session_id)
+join public.scopeproof_events se
+  on se.session_id = s.session_id
+ and se.event_type = 'session_start'
 where s.stimulus_set = 'study12-zh-cn-v1.0'
   and s.status = 'complete'
   and s.participant_id !~ '^(TEST|REVIEW|PROBE)'
@@ -128,12 +142,9 @@ python3 tools/prepare_h3_analysis.py private/responses_v10.csv
 
 ## 版本规则
 
-任何会改变参与者所见文字、答案选项、资料内容或交互方式的修改，都必须同时提升：
+正式题目与前置练习分开标记版本：
 
-1. `data/stimuli.js` 的 `STIMULUS_SET`
-2. `config.js` 的 `stimulusSet`
-3. Supabase 迁移中的版本约束
-4. 本地存储 key 所使用的版本
-5. 研究者指南中冻结的回响任务号
-
-不同版本的数据不得直接合并。
+1. 12 条宣传、资料、答案选项或正式答题交互改变时，提升 `STIMULUS_SET`、H3 答案键及数据库约束。
+2. 只改变正式题目前的教学练习时，保持 `STIMULUS_SET` 不变，提升 `PRACTICE_VERSION`，同时更新建会话 RPC 的校验规则。
+3. 每条正式会话必须同时保留 `stimulus_set` 和 `practice_version`。本研究只合并 `study12-zh-cn-v1.0 + practice-v1.1` 的正式数据；其他组合须分开说明。
+4. 回响任务号只有在回调任务本身变化时才更新。

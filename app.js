@@ -2,11 +2,44 @@ import { CLAIMS, STIMULUS_SET } from "./data/stimuli.js";
 
 const config = window.SCOPEPROOF_CONFIG || {};
 const params = new URLSearchParams(window.location.search);
-const previewMode = params.get("preview") === "1";
+const isLocalHost = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(window.location.hostname);
+const previewMode = isLocalHost || params.get("preview") === "1";
 const requestedCondition = params.get("condition");
 const requestedParticipant = (params.get("participant") || "").trim();
 const validConditions = new Set(["baseline", "scopeproof"]);
 const participantPattern = /^[A-Za-z0-9_-]{1,40}$/;
+const PRACTICE_VERSION = "practice-v1.1";
+
+const practiceOptions = [
+  { value: "supported", label: "资料足够，能支持商家的整句话" },
+  { value: "refuted", label: "资料与宣传不一致，说明宣传不对" },
+  { value: "insufficient", label: "资料还不够，现在不能支持商家的整句话" },
+];
+
+const practiceItems = [
+  {
+    id: "insufficient",
+    claim: "“这个电水壶每次都能在 3 分钟内烧开 1 升水。”",
+    evidence: "说明书只写了“这个水壶可以烧水”，没有提供烧水时间和水量测试。",
+    correct: "insufficient",
+    feedback: {
+      supported: "说明书只证明水壶能烧水，没有证明 3 分钟和 1 升水，所以资料还不够。请再选一次。",
+      refuted: "现有资料没有反驳宣传，只是缺少 3 分钟和 1 升水的测试，所以还不能说宣传不对。请再选一次。",
+      insufficient: "答对了。这是“资料还不够”。如果同样条件下的测试结果直接比宣传差，才是“资料与宣传不一致”。",
+    },
+  },
+  {
+    id: "refuted",
+    claim: "“这个保温杯装满热水，12 小时后水温仍然高于 60°C。”",
+    evidence: "一家与商家无关的机构，按同样的方式装满热水，在第 12 小时测量，水温是 42°C。",
+    correct: "refuted",
+    feedback: {
+      supported: "同样条件下，第 12 小时只有 42°C，与“高于 60°C”相反，所以资料不能支持宣传。请再选一次。",
+      refuted: "答对了。这是“资料与宣传不一致”。如果没有同样条件下、第 12 小时的测试，才是“资料还不够”。",
+      insufficient: "这份资料测了同样条件和同一时间，结果又与宣传相反，所以不是缺资料，而是资料与宣传不一致。请再选一次。",
+    },
+  },
+];
 
 let condition = validConditions.has(requestedCondition) ? requestedCondition : null;
 let participantId = participantPattern.test(requestedParticipant) ? requestedParticipant : null;
@@ -64,7 +97,11 @@ const state = {
   saving: false,
   returnScheduled: false,
   practicePassed: false,
-  practiceAttempts: 0,
+  practiceOrder: [],
+  practiceIndex: 0,
+  practiceAttempts: { insufficient: 0, refuted: 0 },
+  practiceStartedAt: null,
+  practiceCompletedAt: null,
 };
 
 function isValidHuixiangReturnUrl(value) {
@@ -92,6 +129,7 @@ function setParticipantIdentity(value) {
   participantId = value;
   sessionStorageKey = `scopeproof-session:${stimulusSet}:${participantId}`;
   localLogKey = `scopeproof-local-log:${stimulusSet}:${participantId}`;
+  initializePractice();
 }
 
 function previewConditionForParticipant(value) {
@@ -131,6 +169,103 @@ function shuffled(values, seedText) {
     [copy[index], copy[target]] = [copy[target], copy[index]];
   }
   return copy;
+}
+
+function currentPracticeItem() {
+  const id = state.practiceOrder[state.practiceIndex];
+  return practiceItems.find((item) => item.id === id);
+}
+
+function practiceSummary() {
+  const completedAt = state.practiceCompletedAt ?? performance.now();
+  const elapsed = state.practiceStartedAt === null ? 0 : Math.max(0, Math.round(completedAt - state.practiceStartedAt));
+  return {
+    practice_version: PRACTICE_VERSION,
+    practice_order: [...state.practiceOrder],
+    practice_attempts: { ...state.practiceAttempts },
+    practice_elapsed_ms: elapsed,
+    passed_both_first_try: state.practiceAttempts.insufficient === 1 && state.practiceAttempts.refuted === 1,
+  };
+}
+
+function renderPracticeItem() {
+  const item = currentPracticeItem();
+  if (!item) return;
+  $("#practice-progress").textContent = `练习 ${state.practiceIndex + 1}，共 ${practiceItems.length} 道`;
+  $("#practice-claim").textContent = item.claim;
+  $("#practice-evidence").textContent = item.evidence;
+  $("#practice-feedback").className = "practice-feedback";
+  $("#practice-feedback").textContent = "请选择一个答案。";
+  $("#practice-next").classList.add("hidden");
+  $("#practice-fieldset").disabled = false;
+
+  const choices = $("#practice-choices");
+  choices.replaceChildren();
+  practiceOptions.forEach((option) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "practice";
+    input.value = option.value;
+    input.addEventListener("change", () => handlePracticeAnswer(option.value));
+    const text = document.createElement("span");
+    text.textContent = option.label;
+    label.append(input, text);
+    choices.append(label);
+  });
+}
+
+function initializePractice() {
+  if (!participantId) return;
+  state.practicePassed = false;
+  state.practiceOrder = shuffled(practiceItems.map((item) => item.id), `${participantId}:${PRACTICE_VERSION}`);
+  state.practiceIndex = 0;
+  state.practiceAttempts = { insufficient: 0, refuted: 0 };
+  state.practiceStartedAt = performance.now();
+  state.practiceCompletedAt = null;
+  $("#practice-box").classList.remove("hidden");
+  $("#practice-summary").classList.add("hidden");
+  $("#start-button").disabled = true;
+  $("#start-button").textContent = "两道练习答对后开始";
+  renderPracticeItem();
+}
+
+function handlePracticeAnswer(answer) {
+  const item = currentPracticeItem();
+  if (!item) return;
+  state.practiceAttempts[item.id] += 1;
+  const correct = answer === item.correct;
+  const feedback = $("#practice-feedback");
+  feedback.classList.toggle("correct", correct);
+  feedback.classList.toggle("incorrect", !correct);
+  feedback.textContent = item.feedback[answer];
+  if (!correct) return;
+
+  $("#practice-fieldset").disabled = true;
+  const next = $("#practice-next");
+  next.textContent = state.practiceIndex + 1 < state.practiceOrder.length
+    ? "继续下一道练习"
+    : "查看练习小结";
+  next.classList.remove("hidden");
+}
+
+function advancePractice() {
+  if (state.practiceIndex + 1 < state.practiceOrder.length) {
+    state.practiceIndex += 1;
+    renderPracticeItem();
+    $("#practice-title").scrollIntoView({ block: "start", behavior: "smooth" });
+    return;
+  }
+
+  state.practiceCompletedAt = performance.now();
+  state.practicePassed = true;
+  $("#practice-box").classList.add("hidden");
+  $("#practice-summary").classList.remove("hidden");
+  $("#start-button").disabled = false;
+  $("#start-button").textContent = "开始正式答题";
+  $("#start-error").classList.add("hidden");
+  $("#practice-summary").scrollIntoView({ block: "start", behavior: "smooth" });
+  $("#practice-summary-title").focus({ preventScroll: true });
 }
 
 function appendLocalLog(entry) {
@@ -267,6 +402,12 @@ async function startSession() {
       state.token = "preview";
       state.order = shuffled(CLAIMS.map((item) => item.id), participantId);
       state.index = 0;
+      createEvent(state.order[0], "session_start", {
+        item_order: state.order,
+        raw_query: window.location.search,
+        viewport: [window.innerWidth, window.innerHeight],
+        practice_summary: practiceSummary(),
+      });
     } else if (saved) {
       const payload = await rpc("get_scopeproof_session", {
         p_session_id: saved.sessionId,
@@ -282,6 +423,7 @@ async function startSession() {
         p_condition: condition,
         p_stimulus_set: stimulusSet,
         p_item_order: order,
+        p_practice_summary: practiceSummary(),
         p_user_agent: navigator.userAgent.slice(0, 400),
         p_viewport_width: window.innerWidth,
         p_viewport_height: window.innerHeight,
@@ -291,6 +433,7 @@ async function startSession() {
         item_order: order,
         raw_query: window.location.search,
         viewport: [window.innerWidth, window.innerHeight],
+        practice_summary: practiceSummary(),
       });
     }
 
@@ -305,7 +448,7 @@ async function startSession() {
     error.classList.remove("hidden");
   } finally {
     button.disabled = false;
-    button.textContent = state.practicePassed ? "开始正式答题" : "练习答对后开始";
+    button.textContent = state.practicePassed ? "开始正式答题" : "两道练习答对后开始";
   }
 }
 
@@ -711,6 +854,7 @@ function initialize() {
     showOnly("#entry-screen");
     return;
   }
+  initializePractice();
   showOnly("#start-screen");
 }
 
@@ -730,28 +874,7 @@ $("#participant-form").addEventListener("submit", (event) => {
   window.history.replaceState(null, "", nextUrl);
   showOnly("#start-screen");
 });
-document.querySelectorAll('input[name="practice"]').forEach((input) => {
-  input.addEventListener("change", (event) => {
-    const feedback = $("#practice-feedback");
-    const button = $("#start-button");
-    state.practiceAttempts += 1;
-    state.practicePassed = event.target.value === "insufficient";
-    feedback.classList.toggle("correct", state.practicePassed);
-    feedback.classList.toggle("incorrect", !state.practicePassed);
-    if (state.practicePassed) {
-      feedback.textContent = "答对了。资料只说明水壶能烧水，没有说明 3 分钟和 1 升水，所以现在只能说资料还不够。";
-      button.disabled = false;
-      button.textContent = "开始正式答题";
-      $("#start-error").classList.add("hidden");
-    } else {
-      feedback.textContent = event.target.value === "refuted"
-        ? "还不能说宣传不对。现有资料没有反驳它，只是缺少 3 分钟和 1 升水的测试。请再选一次。"
-        : "说明书只证明水壶能烧水，没有证明 3 分钟和 1 升水。资料还不足以支持整句话，请再选一次。";
-      button.disabled = true;
-      button.textContent = "练习答对后开始";
-    }
-  });
-});
+$("#practice-next").addEventListener("click", advancePractice);
 $("#start-button").addEventListener("click", startSession);
 $("#response-form").addEventListener("submit", submitResponse);
 $("#response-form").addEventListener("change", updateSubmitState);

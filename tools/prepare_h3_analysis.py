@@ -13,6 +13,7 @@ from pathlib import Path
 SLOTS = ("capability", "object", "condition", "metric_scope")
 STIMULUS_SET = "study12-zh-cn-v1.0"
 ANSWER_KEY_VERSION = "h3-set-v1.0"
+PRACTICE_VERSION = "practice-v1.1"
 ITEM_STATUS = {
     "P-S-01": "supported",
     "P-S-04": "supported",
@@ -89,6 +90,7 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
     item_rows: list[dict] = []
     priority_rows: list[dict] = []
     participant_items: dict[str, set[str]] = defaultdict(set)
+    participant_practice: dict[str, tuple] = {}
     seen: set[tuple[str, str]] = set()
 
     for row_number, row in enumerate(source_rows, start=2):
@@ -103,6 +105,37 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
             raise ValueError(f"Row {row_number}: participant session is not complete")
         if row.get("h3_answer_key_version", ANSWER_KEY_VERSION) != ANSWER_KEY_VERSION:
             raise ValueError(f"Row {row_number}: wrong H3 answer-key version")
+
+        practice_version = (row.get("practice_version") or "").strip()
+        if practice_version != PRACTICE_VERSION:
+            raise ValueError(f"Row {row_number}: wrong or missing practice version")
+        try:
+            practice_insufficient_attempts = int(row.get("practice_insufficient_attempts", ""))
+            practice_refuted_attempts = int(row.get("practice_refuted_attempts", ""))
+            practice_elapsed_ms = int(row.get("practice_elapsed_ms", ""))
+            practice_passed_both_first_try = parse_bool(row.get("practice_passed_both_first_try"))
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"Row {row_number}: invalid practice summary") from error
+        if not 1 <= practice_insufficient_attempts <= 20 or not 1 <= practice_refuted_attempts <= 20:
+            raise ValueError(f"Row {row_number}: invalid practice attempts")
+        if not 0 <= practice_elapsed_ms <= 86400000:
+            raise ValueError(f"Row {row_number}: invalid practice time")
+        if practice_passed_both_first_try != (
+            practice_insufficient_attempts == 1 and practice_refuted_attempts == 1
+        ):
+            raise ValueError(f"Row {row_number}: inconsistent practice first-try flag")
+        practice_total_attempts = practice_insufficient_attempts + practice_refuted_attempts
+        practice_sensitivity_eligible = int(practice_total_attempts < 4 and practice_elapsed_ms >= 8000)
+        practice_tuple = (
+            practice_version,
+            practice_insufficient_attempts,
+            practice_refuted_attempts,
+            practice_elapsed_ms,
+            practice_passed_both_first_try,
+        )
+        if participant in participant_practice and participant_practice[participant] != practice_tuple:
+            raise ValueError(f"Row {row_number}: practice summary changed within participant")
+        participant_practice[participant] = practice_tuple
 
         item_id = (row.get("item_id") or "").strip()
         if item_id not in ITEM_STATUS:
@@ -161,6 +194,11 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
         common = {
             "participant_id": participant,
             "condition": condition,
+            "practice_version": practice_version,
+            "practice_total_attempts": practice_total_attempts,
+            "practice_elapsed_ms": practice_elapsed_ms,
+            "practice_passed_both_first_try": int(practice_passed_both_first_try),
+            "practice_sensitivity_eligible": practice_sensitivity_eligible,
             "item_id": item_id,
             "trial_order": trial_order,
             "claim_type": "performance" if item_id.startswith("P-") else "automation",
@@ -231,6 +269,11 @@ def prepare(input_path: Path, output_dir: Path, exclude_prefixes: tuple[str, ...
         summaries.append({
             "participant_id": participant,
             "condition": rows[0]["condition"],
+            "practice_version": rows[0]["practice_version"],
+            "practice_total_attempts": rows[0]["practice_total_attempts"],
+            "practice_elapsed_ms": rows[0]["practice_elapsed_ms"],
+            "practice_passed_both_first_try": rows[0]["practice_passed_both_first_try"],
+            "practice_sensitivity_eligible": rows[0]["practice_sensitivity_eligible"],
             "item_count": len(rows),
             "slot_decision_count": len(rows) * 4,
             "exact_set_accuracy": f"{sum(row['exact_set_accuracy'] for row in rows) / len(rows):.6f}",

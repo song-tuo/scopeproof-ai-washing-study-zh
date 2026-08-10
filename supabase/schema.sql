@@ -637,12 +637,23 @@ alter table public.scopeproof_responses
   add constraint scopeproof_responses_h3_answer_key_version_check
   check (h3_answer_key_version is null or h3_answer_key_version in ('h3-set-v0.6', 'h3-set-v0.7', 'h3-set-v0.8', 'h3-set-v0.9', 'h3-set-v1.0'));
 
-create or replace function public.create_scopeproof_session(
+-- Practice v1.1 requires an authenticated-by-token session to carry a validated
+-- record of both comprehension exercises. Remove the old overload so it cannot
+-- be used to create a formal session without the practice record.
+revoke execute on function public.create_scopeproof_session(
+  text, text, text, text, text[], text, integer, integer
+) from public, anon, authenticated;
+drop function public.create_scopeproof_session(
+  text, text, text, text, text[], text, integer, integer
+);
+
+create function public.create_scopeproof_session(
   p_token text,
   p_participant_id text,
   p_condition text,
   p_stimulus_set text,
   p_item_order text[],
+  p_practice_summary jsonb,
   p_user_agent text default '',
   p_viewport_width integer default null,
   p_viewport_height integer default null
@@ -654,6 +665,10 @@ as $$
 declare
   v_session public.scopeproof_sessions%rowtype;
   v_condition text;
+  v_practice_order text[];
+  v_insufficient_attempts integer;
+  v_refuted_attempts integer;
+  v_practice_elapsed_ms integer;
   v_allowed constant text[] := array[
     'P-S-01', 'P-S-04', 'A-S-01', 'P-R-01', 'A-R-02', 'A-R-03',
     'P-I-01', 'P-I-02', 'A-I-01', 'P-F-01', 'A-F-01', 'A-F-02'
@@ -671,6 +686,46 @@ begin
   if p_viewport_width not between 240 and 10000 or p_viewport_height not between 240 and 10000 then
     raise exception 'invalid viewport';
   end if;
+
+  if jsonb_typeof(p_practice_summary) is distinct from 'object'
+    or not (p_practice_summary ?& array[
+      'practice_version', 'practice_order', 'practice_attempts',
+      'practice_elapsed_ms', 'passed_both_first_try'
+    ])
+    or (select count(*) from jsonb_object_keys(p_practice_summary)) <> 5
+    or p_practice_summary->>'practice_version' <> 'practice-v1.1'
+  then raise exception 'invalid practice summary'; end if;
+
+  if jsonb_typeof(p_practice_summary->'practice_order') is distinct from 'array'
+    or jsonb_array_length(p_practice_summary->'practice_order') <> 2
+  then raise exception 'invalid practice order'; end if;
+  select array_agg(value order by value) into v_practice_order
+  from jsonb_array_elements_text(p_practice_summary->'practice_order') as entry(value);
+  if v_practice_order is distinct from array['insufficient', 'refuted']::text[] then
+    raise exception 'invalid practice order';
+  end if;
+
+  if jsonb_typeof(p_practice_summary->'practice_attempts') is distinct from 'object'
+    or not ((p_practice_summary->'practice_attempts') ?& array['insufficient', 'refuted'])
+    or (select count(*) from jsonb_object_keys(p_practice_summary->'practice_attempts')) <> 2
+    or jsonb_typeof(p_practice_summary->'practice_attempts'->'insufficient') is distinct from 'number'
+    or jsonb_typeof(p_practice_summary->'practice_attempts'->'refuted') is distinct from 'number'
+    or (p_practice_summary->'practice_attempts'->>'insufficient') !~ '^([1-9]|1[0-9]|20)$'
+    or (p_practice_summary->'practice_attempts'->>'refuted') !~ '^([1-9]|1[0-9]|20)$'
+  then raise exception 'invalid practice attempts'; end if;
+  v_insufficient_attempts := (p_practice_summary->'practice_attempts'->>'insufficient')::integer;
+  v_refuted_attempts := (p_practice_summary->'practice_attempts'->>'refuted')::integer;
+
+  if jsonb_typeof(p_practice_summary->'practice_elapsed_ms') is distinct from 'number'
+    or (p_practice_summary->>'practice_elapsed_ms') !~ '^(0|[1-9][0-9]{0,7})$'
+  then raise exception 'invalid practice time'; end if;
+  v_practice_elapsed_ms := (p_practice_summary->>'practice_elapsed_ms')::integer;
+  if v_practice_elapsed_ms not between 0 and 86400000 then raise exception 'invalid practice time'; end if;
+
+  if jsonb_typeof(p_practice_summary->'passed_both_first_try') is distinct from 'boolean'
+    or (p_practice_summary->>'passed_both_first_try')::boolean is distinct from
+      (v_insufficient_attempts = 1 and v_refuted_attempts = 1)
+  then raise exception 'invalid practice first-try flag'; end if;
 
   if p_condition is null then
     perform pg_advisory_xact_lock(202608101200);
@@ -711,7 +766,8 @@ begin
       'condition', v_condition,
       'stimulus_set', p_stimulus_set,
       'item_order', to_jsonb(p_item_order),
-      'viewport', jsonb_build_array(p_viewport_width, p_viewport_height)
+      'viewport', jsonb_build_array(p_viewport_width, p_viewport_height),
+      'practice_summary', p_practice_summary
     ), now()
   );
 
@@ -918,13 +974,13 @@ begin
 end;
 $$;
 
-revoke execute on function public.create_scopeproof_session(text, text, text, text, text[], text, integer, integer) from public;
+revoke execute on function public.create_scopeproof_session(text, text, text, text, text[], jsonb, text, integer, integer) from public;
 revoke execute on function public.save_scopeproof_response(
   uuid, text, text, integer, text, integer, boolean, integer, boolean,
   text, text[], text[], boolean, text[], text, text[], integer, integer, uuid, timestamptz
 ) from public;
 
-grant execute on function public.create_scopeproof_session(text, text, text, text, text[], text, integer, integer) to anon, authenticated;
+grant execute on function public.create_scopeproof_session(text, text, text, text, text[], jsonb, text, integer, integer) to anon, authenticated;
 grant execute on function public.save_scopeproof_response(
   uuid, text, text, integer, text, integer, boolean, integer, boolean,
   text, text[], text[], boolean, text[], text, text[], integer, integer, uuid, timestamptz

@@ -9,6 +9,19 @@ const huixiangReturnUrl = "https://www.huixiangdata.com/transferPage?url=https%3
 const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const browser = await chromium.launch({ headless: true, executablePath: chrome });
 
+async function completePractice(page) {
+  for (let index = 0; index < 2; index += 1) {
+    const claim = await page.locator("#practice-claim").textContent();
+    const answer = claim.includes("电水壶")
+      ? "资料还不够，现在不能支持商家的整句话"
+      : "资料与宣传不一致，说明宣传不对";
+    await page.getByRole("radio", { name: answer, exact: true }).check();
+    await page.getByText("答对了", { exact: false }).waitFor();
+    await page.getByRole("button", { name: index === 0 ? "继续下一道练习" : "查看练习小结" }).click();
+  }
+  await page.getByRole("heading", { name: "正式答题前，再看一遍" }).waitFor();
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   let requestedReturnUrl = null;
@@ -25,7 +38,7 @@ try {
   await page.getByLabel("回响用户编号").fill(participant);
   await page.getByRole("button", { name: "下一步" }).click();
   await page.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
-  await page.getByRole("radio", { name: "资料还不够，现在不能支持商家的整句话", exact: true }).check();
+  await completePractice(page);
   await page.getByRole("button", { name: "开始正式答题" }).click();
   await page.getByText("第 1 条，共 12 条", { exact: true }).waitFor({ timeoutMs: 20000 });
 
@@ -52,7 +65,7 @@ try {
   assert.equal(await page.locator("#upload-warning").isVisible(), false);
   await page.waitForURL("https://www.huixiangdata.com/**", { timeout: 5000 });
   assert.equal(requestedReturnUrl, huixiangReturnUrl);
-  console.log("PASS: production saved 12 items, hid the internal completion code, and auto-returned to Huixiang");
+  console.log("PASS: production passed practice v1.1, saved 12 items, and auto-returned to Huixiang");
 } finally {
   await browser.close();
 }

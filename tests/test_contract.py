@@ -158,8 +158,10 @@ def main() -> int:
     assert "只根据本页资料判断" in html
     assert "我们不问商家是不是故意说谎" in html
     assert "尚未选择" in html
-    assert 'class="practice-box"' in html
-    assert 'name="practice" value="insufficient"' in html
+    assert 'id="practice-box" class="practice-box"' in html
+    assert 'id="practice-choices"' in html
+    assert 'id="practice-summary"' in html
+    assert "同样条件下，测试结果与宣传相反" in html
     assert 'id="start-button" class="primary-button" type="button" disabled' in html
     assert 'id="h3-set-choices"' in html
     assert 'type="checkbox" name="h3-none"' in html
@@ -182,6 +184,11 @@ def main() -> int:
     assert "window.location.replace(huixiangReturnUrl)" in app
     assert "isValidHuixiangReturnUrl" in app
     assert "setParticipantIdentity" in app
+    assert 'const PRACTICE_VERSION = "practice-v1.1"' in app
+    assert 'p_practice_summary: practiceSummary()' in app
+    assert 'id: "insufficient"' in app
+    assert 'id: "refuted"' in app
+    assert '["localhost", "127.0.0.1", "::1", "[::1]"]' in app
 
     h3_doc = (ROOT / "H3_MEASUREMENT_V10_ZH.md").read_text(encoding="utf-8")
     assert "H3 是确认性的过程/操纵指标，不是因果中介" in h3_doc
@@ -192,6 +199,9 @@ def main() -> int:
     guide = (ROOT / "RESEARCHER_GUIDE_ZH.md").read_text(encoding="utf-8")
     assert "12–16 人软启动" in guide
     assert "96 名有效完成者" in guide
+    assert "practice-v1.1" in guide
+    assert "总尝试次数 >= 4" in guide
+    assert "练习总用时 < 8 秒" in guide
 
     sql = (ROOT / "supabase/schema.sql").read_text(encoding="utf-8")
     assert sql.count("enable row level security") == 3
@@ -204,7 +214,16 @@ def main() -> int:
     assert "h3-set-v1.0" in sql
     assert "pg_advisory_xact_lock(202608101200)" in sql
     assert "invalid H3 option order" in sql
+    assert "invalid practice summary" in sql
+    assert "invalid practice first-try flag" in sql
+    assert "practice_summary" in sql
     assert not re.search(r"grant\s+(select|insert|update|delete).*scopeproof_", sql, re.I)
+
+    practice_migration = (ROOT / "supabase/migrations/20260810140000_v11_practice_summary.sql").read_text(encoding="utf-8")
+    assert "drop function public.create_scopeproof_session" in practice_migration
+    assert "practice-v1.1" in practice_migration
+    assert "jsonb_object_keys(p_practice_summary)" in practice_migration
+    assert "practice_summary', p_practice_summary" in practice_migration
 
     migration = (ROOT / "supabase/migrations/20260810120000_v10_comprehension_practice.sql").read_text(encoding="utf-8")
     server_states = {
@@ -219,7 +238,7 @@ def main() -> int:
         }
         assert server_states[claim["id"]] == expected
 
-    print("PASS: 12-item contract, natural-language gate, no gold leakage, responsive and RLS checks")
+    print("PASS: v1.0 stimuli, practice v1.1, natural-language gate, responsive and RLS checks")
     return 0
 
 

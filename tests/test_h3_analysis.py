@@ -21,6 +21,11 @@ def main() -> int:
             "participant_id": "PILOT001",
             "condition": "scopeproof",
             "stimulus_set": "study12-zh-cn-v1.0",
+            "practice_version": "practice-v1.1",
+            "practice_insufficient_attempts": "1",
+            "practice_refuted_attempts": "2",
+            "practice_elapsed_ms": "12000",
+            "practice_passed_both_first_try": "false",
             "item_id": "P-I-02",
             "position": "0",
             "truth_probability": "50",
@@ -62,6 +67,8 @@ def main() -> int:
             items = list(csv.DictReader(handle))
         with (output / "h3_priority_exploratory.csv").open(newline="", encoding="utf-8") as handle:
             priorities = list(csv.DictReader(handle))
+        with (output / "h3_participant_summary.csv").open(newline="", encoding="utf-8") as handle:
+            participants = list(csv.DictReader(handle))
         assert len(slots) == 8
         assert all(row["correct"] == "1" for row in slots)
         assert all(row["exact_set_accuracy"] == "1" for row in items)
@@ -76,6 +83,8 @@ def main() -> int:
         assert priority_by_participant["PILOT001"]["has_priority_question"] == "1"
         assert priority_by_participant["PILOT002"]["priority_forced"] == "1"
         assert priority_by_participant["PILOT002"]["has_priority_question"] == "0"
+        assert all(row["practice_total_attempts"] == "3" for row in participants)
+        assert all(row["practice_sensitivity_eligible"] == "1" for row in participants)
     print("PASS: H3 analysis creates validated slot, item, priority, and participant tables")
     return 0
 

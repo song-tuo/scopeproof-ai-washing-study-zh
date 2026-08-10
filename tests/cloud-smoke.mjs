@@ -24,6 +24,21 @@ async function rpc(name, body) {
   return payload;
 }
 
+async function rpcMustFail(name, body, expectedMessage) {
+  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      apikey: config.supabaseAnonKey,
+      Authorization: `Bearer ${config.supabaseAnonKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => null);
+  assert.equal(response.ok, false, `${name} unexpectedly succeeded`);
+  assert.match(String(payload?.message || ""), expectedMessage);
+}
+
 const directRead = await fetch(`${config.supabaseUrl}/rest/v1/scopeproof_sessions?select=*`, {
   headers: {
     apikey: config.supabaseAnonKey,
@@ -35,12 +50,32 @@ assert.equal(directRead.ok, false, "Anonymous users must not read study tables d
 const participant = `TEST-CLOUD-${Date.now()}`;
 const token = randomBytes(32).toString("hex");
 const order = CLAIMS.map((claim) => claim.id);
+const practiceSummary = {
+  practice_version: "practice-v1.1",
+  practice_order: ["insufficient", "refuted"],
+  practice_attempts: { insufficient: 1, refuted: 2 },
+  practice_elapsed_ms: 12000,
+  passed_both_first_try: false,
+};
+await rpcMustFail("create_scopeproof_session", {
+  p_token: randomBytes(32).toString("hex"),
+  p_participant_id: `TEST-CLOUD-BAD-${Date.now()}`,
+  p_condition: null,
+  p_stimulus_set: STIMULUS_SET,
+  p_item_order: order,
+  p_practice_summary: { ...practiceSummary, passed_both_first_try: true },
+  p_user_agent: "ScopeProof invalid-practice smoke test",
+  p_viewport_width: 1440,
+  p_viewport_height: 1000,
+}, /invalid practice first-try flag/);
+
 const session = await rpc("create_scopeproof_session", {
   p_token: token,
   p_participant_id: participant,
   p_condition: null,
   p_stimulus_set: STIMULUS_SET,
   p_item_order: order,
+  p_practice_summary: practiceSummary,
   p_user_agent: "ScopeProof cloud smoke test",
   p_viewport_width: 1440,
   p_viewport_height: 1000,
@@ -99,4 +134,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log(`PASS: v1.0 auto-assigned ${session.condition}, completed 12 cloud items, and blocked direct table reads`);
+console.log(`PASS: practice v1.1 was accepted, v1.0 auto-assigned ${session.condition}, and 12 cloud items completed`);

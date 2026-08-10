@@ -58,25 +58,29 @@
         <p><strong>全部要点都有资料支持</strong>，才选“资料能支持”；有资料与宣传相反，选“资料与宣传不一致”；只要还有重要内容没资料，选“资料还不够”。</p>
       </section>
 
-      <section class="practice-box" aria-labelledby="practice-title">
-        <p class="kicker">先做一道练习</p>
+      <section id="practice-box" class="practice-box" aria-labelledby="practice-title">
+        <p id="practice-progress" class="kicker">练习 1，共 2 道</p>
         <h2 id="practice-title">看看您是否理解刚才的规则</h2>
         <div class="practice-example">
-          <p><strong>商家说：</strong>“这个电水壶每次都能在 3 分钟内烧开 1 升水。”</p>
-          <p><strong>本页资料：</strong>说明书只写了“这个水壶可以烧水”，没有提供烧水时间和水量测试。</p>
+          <p><strong>商家说：</strong><span id="practice-claim"></span></p>
+          <p><strong>本页资料：</strong><span id="practice-evidence"></span></p>
         </div>
-        <fieldset class="practice-fieldset">
+        <fieldset id="practice-fieldset" class="practice-fieldset">
           <legend>只看这些资料，应该怎样判断？</legend>
-          <div class="choice-list">
-            <label><input type="radio" name="practice" value="supported"><span>资料足够，能支持商家的整句话</span></label>
-            <label><input type="radio" name="practice" value="refuted"><span>资料与宣传不一致，说明宣传不对</span></label>
-            <label><input type="radio" name="practice" value="insufficient"><span>资料还不够，现在不能支持商家的整句话</span></label>
-          </div>
+          <div id="practice-choices" class="choice-list"></div>
         </fieldset>
         <p id="practice-feedback" class="practice-feedback" aria-live="polite">请选择一个答案。</p>
+        <button id="practice-next" class="secondary-button practice-next hidden" type="button">继续下一道练习</button>
       </section>
 
-      <button id="start-button" class="primary-button" type="button" disabled>练习答对后开始</button>
+      <section id="practice-summary" class="practice-summary hidden" aria-labelledby="practice-summary-title">
+        <p class="kicker">练习完成</p>
+        <h2 id="practice-summary-title" tabindex="-1">正式答题前，再看一遍</h2>
+        <p><strong>没有相关测试</strong><span>选择“资料还不够”</span></p>
+        <p><strong>同样条件下，测试结果与宣传相反</strong><span>选择“资料与宣传不一致”</span></p>
+      </section>
+
+      <button id="start-button" class="primary-button" type="button" disabled>两道练习答对后开始</button>
       <p id="start-error" class="form-error hidden" role="alert"></p>
     </section>
 
@@ -226,7 +230,7 @@
     </ol>
   </dialog>
 
-  <footer class="site-footer">ScopeProof · 中文实验材料 v1.0 · 所有产品与公司均为虚构</footer>
+  <footer class="site-footer">ScopeProof · 正式题目 v1.0 · 练习 v1.1 · 所有产品与公司均为虚构</footer>
 
   <script src="./config.js"></script>
   <script type="module" src="./app.js"></script>

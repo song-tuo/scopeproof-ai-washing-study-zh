@@ -80,6 +80,12 @@ outcome ~ condition + H3_slot_accuracy + verdict_type + trial_order
 1. **只使用 `priority_forced = 0` 的行。** 只选了一项时优先项由界面自动记录，那是被迫的结果，不是偏好。
 2. **候选集本身依赖参与者的 H3 选择。** 两种条件的选择集若不同（这正是 H3 预期的效应），直接比较两组的优先分布会被选择集混淆。跨条件比较须限定在候选集相同的行内进行，或把候选集作为条件变量。
 
+## 练习理解度与敏感性分析
+
+正式题目前的两道练习使用独立版本 `practice-v1.1`。练习顺序、分题尝试次数、总用时和是否两题都首次答对，由建会话 RPC 校验后写入服务器端 `session_start`。练习允许重选，不作为招募筛选关卡。
+
+主分析纳入所有满足正式数据完整性条件的参与者。另做一项预先固定的敏感性分析：剔除**两题总尝试次数 >= 4**，或**练习总用时 < 8 秒**的参与者，再运行同一组主要模型。该分析用于检查低投入作答是否改变结论，不取代全样本主结果，也不允许在查看条件效应后调整阈值。
+
 ## 选项措辞审计
 
 48 个 H3 选项的措辞本身不得透露槽位状态，否则参与者不看页面也能作答，而且这条捷径两组通用，会压缩条件差异。规则：
@@ -104,7 +110,7 @@ outcome ~ condition + H3_slot_accuracy + verdict_type + trial_order
 运行分析准备：
 
 ```bash
-python3 tools/prepare_h3_analysis.py private/responses_v07.csv
+python3 tools/prepare_h3_analysis.py private/responses_v10.csv
 ```
 
 输出包括 `h3_slot_level.csv`、`h3_item_level.csv`、`h3_priority_exploratory.csv` 和 `h3_participant_summary.csv`。
