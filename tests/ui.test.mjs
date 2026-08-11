@@ -203,7 +203,7 @@ try {
   await localGuard.close();
   console.log("UI stage: localhost guard passed");
 
-  const retryPage = await browser.newPage({ viewport: { width: 900, height: 760 } });
+  const retryPage = await browser.newPage({ viewport: { width: 390, height: 180 } });
   retryPage.setDefaultTimeout(10000);
   const retryBodies = [];
   await retryPage.route("https://mrrgljrezsoepwflbato.supabase.co/rest/v1/rpc/create_scopeproof_session", async (route) => {
@@ -237,6 +237,7 @@ try {
   await startStudy(retryPage);
   assert.equal(retryBodies.length, 3);
   assert.equal(new Set(retryBodies.map((body) => body.p_token)).size, 1);
+  assert.equal(retryBodies[2].p_viewport_height, 240);
   await retryPage.close();
   console.log("UI stage: transient session retry passed");
 

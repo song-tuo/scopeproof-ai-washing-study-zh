@@ -329,7 +329,7 @@ async function rpc(name, body, { retries = 0 } = {}) {
 
     const payload = await response.json().catch(() => null);
     if (response.ok) return payload;
-    if ([429, 502, 503, 504].includes(response.status) && attempt < retries) {
+    if ([408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < retries) {
       await wait(400 * (attempt + 1));
       continue;
     }
@@ -342,7 +342,10 @@ async function rpc(name, body, { retries = 0 } = {}) {
     if (/invalid practice/i.test(rawMessage)) {
       throw new Error("练习记录没有正确保存。请刷新页面后重新完成练习。");
     }
-    throw new Error("云端暂时没有接受本次连接。请点击“开始正式答题”重试。");
+    if (/invalid viewport/i.test(rawMessage)) {
+      throw new Error("当前页面窗口过小。请关闭输入法或转动手机后，再点击“开始正式答题”。");
+    }
+    throw new Error(`云端暂时没有接受本次连接（错误 ${response.status}）。请点击“开始正式答题”重试。`);
   }
   throw new Error("网络连接不稳定。请点击“开始正式答题”重试。");
 }
@@ -452,8 +455,8 @@ async function startSession() {
         p_item_order: order,
         p_practice_summary: practiceSummary(),
         p_user_agent: navigator.userAgent.slice(0, 400),
-        p_viewport_width: window.innerWidth,
-        p_viewport_height: window.innerHeight,
+        p_viewport_width: Math.max(240, window.innerWidth),
+        p_viewport_height: Math.max(240, window.innerHeight),
       }, { retries: 2 });
       applySession(payload, token);
       state.pendingToken = null;

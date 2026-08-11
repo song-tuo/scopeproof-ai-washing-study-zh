@@ -189,6 +189,8 @@ def main() -> int:
     assert 'p_practice_summary: practiceSummary()' in app
     assert '}, { retries: 2 });' in app
     assert "state.pendingToken || randomToken()" in app
+    assert "p_viewport_height: Math.max(240, window.innerHeight)" in app
+    assert "错误 ${response.status}" in app
     assert 'id: "insufficient"' in app
     assert 'id: "refuted"' in app
     assert '["localhost", "127.0.0.1", "::1", "[::1]"]' in app
