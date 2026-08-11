@@ -34,8 +34,8 @@ try {
     });
   });
   await page.goto(url);
-  await page.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
-  await page.getByLabel("回响用户编号").fill(participant);
+  await page.getByLabel("请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。").waitFor();
+  await page.getByLabel("请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。").fill(participant);
   await page.getByRole("button", { name: "下一步" }).click();
   await page.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
   await completePractice(page);

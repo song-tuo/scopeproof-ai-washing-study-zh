@@ -24,15 +24,12 @@
   </header>
 
   <main>
-    <section id="entry-screen" class="narrow-page hidden">
-      <p class="kicker">开始实验</p>
-      <h1>请输入回响用户编号</h1>
-      <p class="lead">请完整填写回响数据提供给您的用户编号。这个编号只用来核对答卷和发放报酬。</p>
-      <form id="participant-form" novalidate>
-        <label class="text-label" for="participant-input">回响用户编号</label>
+    <section id="entry-screen" class="narrow-page platform-entry-simple hidden">
+      <form id="participant-form" class="platform-form-simple" novalidate>
+        <label class="text-label" for="participant-input">请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。</label>
         <input id="participant-input" class="participant-input" name="participant" type="text" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" required>
         <p id="participant-error" class="form-error hidden" role="alert"></p>
-        <button class="primary-button" type="submit">下一步</button>
+        <button class="secondary-button" type="submit">下一步</button>
       </form>
     </section>
 

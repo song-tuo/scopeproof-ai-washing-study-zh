@@ -181,9 +181,11 @@ try {
 
   const entry = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await entry.goto(`${baseUrl}/?preview=1`);
-  await entry.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
+  await entry.getByLabel("请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。").waitFor();
+  assert.equal(await entry.locator(".site-bar").isVisible(), false);
+  assert.equal(await entry.locator(".site-footer").isVisible(), false);
   await entry.screenshot({ path: resolve(artifacts, "mobile-participant-entry-v10.png"), fullPage: true });
-  await entry.getByLabel("回响用户编号").fill("TEST-ENTRY-V10");
+  await entry.getByLabel("请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。").fill("TEST-ENTRY-V10");
   await entry.getByRole("button", { name: "下一步" }).click();
   await entry.getByRole("heading", { name: "请判断本页资料够不够支持商家的宣传" }).waitFor();
   await assertNoOverflow(entry);
@@ -228,7 +230,7 @@ try {
 
   const invalid = await browser.newPage({ viewport: { width: 900, height: 700 } });
   await invalid.goto(`${baseUrl}/?participant=contains%20space`);
-  await invalid.getByRole("heading", { name: "请输入回响用户编号" }).waitFor();
+  await invalid.getByLabel("请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。").waitFor();
   assert.equal(await invalid.locator("#participant-error").isVisible(), true);
   console.log("UI stage: invalid participant passed");
 

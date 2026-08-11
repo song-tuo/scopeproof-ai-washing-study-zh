@@ -122,6 +122,7 @@ function isValidHuixiangReturnUrl(value) {
 
 function showOnly(selector) {
   screens.forEach((screen) => $(screen).classList.toggle("hidden", screen !== selector));
+  document.body.classList.toggle("entry-mode", selector === "#entry-screen");
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 

@@ -122,6 +122,30 @@ h3 { font-size: 22px; }
   padding: 72px 0 96px;
 }
 
+body.entry-mode { background: var(--white); }
+body.entry-mode .site-bar,
+body.entry-mode .site-footer { display: none; }
+.platform-entry-simple {
+  width: min(760px, calc(100% - 32px));
+  padding-top: 64px;
+}
+.platform-form-simple {
+  display: grid;
+  gap: 16px;
+}
+.platform-form-simple .text-label {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+.platform-form-simple .participant-input { margin: 0; }
+.platform-form-simple .form-error { margin: 0; }
+.platform-form-simple .secondary-button {
+  min-width: 112px;
+  justify-self: end;
+}
+
 .kicker {
   margin-bottom: 8px;
   color: var(--clay-dark);
@@ -481,6 +505,8 @@ dialog li + li { margin-top: 12px; }
   .brand img { width: 36px; height: 36px; }
   .brand small { display: none; }
   .narrow-page { width: min(100% - 28px, 780px); padding: 46px 0 72px; }
+  .platform-entry-simple { width: min(100% - 32px, 760px); padding-top: 32px; }
+  .platform-form-simple .secondary-button { width: 100%; justify-self: stretch; }
   .lead { font-size: 19px; }
   .intro-band { grid-template-columns: 1fr; }
   .intro-band > div { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 17px 8px; }

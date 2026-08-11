@@ -168,7 +168,8 @@ def main() -> int:
     assert 'id="priority-fieldset"' in html
     assert 'id="entry-screen"' in html
     assert 'id="participant-input"' in html
-    assert "请输入回响用户编号" in html
+    assert "请填写已复制的回响数据用户ID，ID将仅用于审核数据匹配身份和发放报酬。" in html
+    assert "请输入回响用户编号" not in html
     assert "这个实验链接不完整" not in html
     assert 'id="huixiang-return"' in html
     assert "202608102142" in html
