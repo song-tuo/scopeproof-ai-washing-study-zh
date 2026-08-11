@@ -187,6 +187,8 @@ def main() -> int:
     assert "setParticipantIdentity" in app
     assert 'const PRACTICE_VERSION = "practice-v1.1"' in app
     assert 'p_practice_summary: practiceSummary()' in app
+    assert '}, { retries: 2 });' in app
+    assert "state.pendingToken || randomToken()" in app
     assert 'id: "insufficient"' in app
     assert 'id: "refuted"' in app
     assert '["localhost", "127.0.0.1", "::1", "[::1]"]' in app
@@ -225,6 +227,11 @@ def main() -> int:
     assert "practice-v1.1" in practice_migration
     assert "jsonb_object_keys(p_practice_summary)" in practice_migration
     assert "practice_summary', p_practice_summary" in practice_migration
+
+    retry_migration = (ROOT / "supabase/migrations/20260811020000_v12_idempotent_session_retry.sql").read_text(encoding="utf-8")
+    assert "create or replace function public.create_scopeproof_session" in retry_migration
+    assert "token_hash = extensions.digest(p_token, 'sha256')" in retry_migration
+    assert "participant already used" in retry_migration
 
     migration = (ROOT / "supabase/migrations/20260810120000_v10_comprehension_practice.sql").read_text(encoding="utf-8")
     server_states = {

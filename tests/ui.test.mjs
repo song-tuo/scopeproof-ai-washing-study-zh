@@ -203,6 +203,43 @@ try {
   await localGuard.close();
   console.log("UI stage: localhost guard passed");
 
+  const retryPage = await browser.newPage({ viewport: { width: 900, height: 760 } });
+  retryPage.setDefaultTimeout(10000);
+  const retryBodies = [];
+  await retryPage.route("https://mrrgljrezsoepwflbato.supabase.co/rest/v1/rpc/create_scopeproof_session", async (route) => {
+    const body = route.request().postDataJSON();
+    retryBodies.push(body);
+    if (retryBodies.length < 3) {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        headers: { "access-control-allow-origin": "*" },
+        body: JSON.stringify({ message: "temporary unavailable" }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "access-control-allow-origin": "*" },
+      body: JSON.stringify({
+        session_id: "00000000-0000-4000-8000-000000000011",
+        condition: "baseline",
+        stimulus_set: "study12-zh-cn-v1.0",
+        item_order: body.p_item_order,
+        current_position: 0,
+        status: "active",
+        completion_code: null,
+      }),
+    });
+  });
+  await retryPage.goto("http://scopeproof.localhost:4173/?participant=TEST-RETRY-V12");
+  await startStudy(retryPage);
+  assert.equal(retryBodies.length, 3);
+  assert.equal(new Set(retryBodies.map((body) => body.p_token)).size, 1);
+  await retryPage.close();
+  console.log("UI stage: transient session retry passed");
+
   const previewCompletion = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const previewUrl = `${baseUrl}/?preview=1&condition=scopeproof&participant=TEST-COMPLETE-V10`;
   await previewCompletion.goto(previewUrl);

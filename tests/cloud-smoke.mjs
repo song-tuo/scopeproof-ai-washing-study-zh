@@ -82,6 +82,20 @@ const session = await rpc("create_scopeproof_session", {
 });
 assert.ok(["baseline", "scopeproof"].includes(session.condition));
 
+const retriedSession = await rpc("create_scopeproof_session", {
+  p_token: token,
+  p_participant_id: participant,
+  p_condition: null,
+  p_stimulus_set: STIMULUS_SET,
+  p_item_order: order,
+  p_practice_summary: practiceSummary,
+  p_user_agent: "ScopeProof cloud smoke retry",
+  p_viewport_width: 1440,
+  p_viewport_height: 1000,
+});
+assert.equal(retriedSession.session_id, session.session_id);
+assert.equal(retriedSession.current_position, 0);
+
 await rpc("save_scopeproof_event", {
   p_session_id: session.session_id,
   p_token: token,
@@ -134,4 +148,4 @@ assert.equal(resumed.current_position, 12);
 assert.equal(resumed.status, "complete");
 assert.equal(resumed.completion_code, result.completion_code);
 
-console.log(`PASS: practice v1.1 was accepted, v1.0 auto-assigned ${session.condition}, and 12 cloud items completed`);
+console.log(`PASS: idempotent retry recovered the same session, v1.0 auto-assigned ${session.condition}, and 12 cloud items completed`);

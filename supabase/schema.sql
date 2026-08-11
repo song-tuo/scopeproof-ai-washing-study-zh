@@ -110,6 +110,22 @@ begin
       p_viewport_width, p_viewport_height
     ) returning * into v_session;
   exception when unique_violation then
+    select * into v_session
+    from public.scopeproof_sessions
+    where participant_id = p_participant_id
+      and stimulus_set = p_stimulus_set
+      and token_hash = extensions.digest(p_token, 'sha256');
+    if found then
+      return jsonb_build_object(
+        'session_id', v_session.session_id,
+        'condition', v_session.condition,
+        'stimulus_set', v_session.stimulus_set,
+        'item_order', to_jsonb(v_session.item_order),
+        'current_position', v_session.current_position,
+        'status', v_session.status,
+        'completion_code', case when v_session.status = 'complete' then v_session.completion_code else null end
+      );
+    end if;
     raise exception 'participant already used';
   end;
 
@@ -754,6 +770,22 @@ begin
       p_viewport_width, p_viewport_height
     ) returning * into v_session;
   exception when unique_violation then
+    select * into v_session
+    from public.scopeproof_sessions
+    where participant_id = p_participant_id
+      and stimulus_set = p_stimulus_set
+      and token_hash = extensions.digest(p_token, 'sha256');
+    if found then
+      return jsonb_build_object(
+        'session_id', v_session.session_id,
+        'condition', v_session.condition,
+        'stimulus_set', v_session.stimulus_set,
+        'item_order', to_jsonb(v_session.item_order),
+        'current_position', v_session.current_position,
+        'status', v_session.status,
+        'completion_code', case when v_session.status = 'complete' then v_session.completion_code else null end
+      );
+    end if;
     raise exception 'participant already used';
   end;
 

@@ -102,6 +102,7 @@ const state = {
   practiceAttempts: { insufficient: 0, refuted: 0 },
   practiceStartedAt: null,
   practiceCompletedAt: null,
+  pendingToken: null,
 };
 
 function isValidHuixiangReturnUrl(value) {
@@ -298,28 +299,52 @@ function createEvent(itemId, eventType, payload = {}) {
   return entry;
 }
 
-async function rpc(name, body) {
+function wait(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function rpc(name, body, { retries = 0 } = {}) {
   if (!config.supabaseUrl || !config.supabaseAnonKey) {
     throw new Error("云端数据服务还没有配置。请联系研究人员。");
   }
-  const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
-    method: "POST",
-    headers: {
-      apikey: config.supabaseAnonKey,
-      Authorization: `Bearer ${config.supabaseAnonKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  const payload = await response.json().catch(() => null);
-  if (!response.ok) {
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
+        method: "POST",
+        headers: {
+          apikey: config.supabaseAnonKey,
+          Authorization: `Bearer ${config.supabaseAnonKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      if (attempt < retries) {
+        await wait(400 * (attempt + 1));
+        continue;
+      }
+      throw new Error("网络连接不稳定。请确认网络后，再点击“开始正式答题”重试。", { cause: error });
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (response.ok) return payload;
+    if ([429, 502, 503, 504].includes(response.status) && attempt < retries) {
+      await wait(400 * (attempt + 1));
+      continue;
+    }
+
     const rawMessage = String(payload?.message || "");
+    console.error("ScopeProof RPC failed", name, response.status, rawMessage);
     if (/participant.*used|duplicate|unique/i.test(rawMessage)) {
       throw new Error("这个回响用户编号已经使用过。请联系研究人员。");
     }
-    throw new Error("暂时无法连接云端。请检查网络后再试。");
+    if (/invalid practice/i.test(rawMessage)) {
+      throw new Error("练习记录没有正确保存。请刷新页面后重新完成练习。");
+    }
+    throw new Error("云端暂时没有接受本次连接。请点击“开始正式答题”重试。");
   }
-  return payload;
+  throw new Error("网络连接不稳定。请点击“开始正式答题”重试。");
 }
 
 async function recordEvent(itemId, eventType, payload = {}) {
@@ -416,7 +441,8 @@ async function startSession() {
       });
       applySession(payload, saved.token);
     } else {
-      const token = randomToken();
+      const token = state.pendingToken || randomToken();
+      state.pendingToken = token;
       const order = shuffled(CLAIMS.map((item) => item.id), participantId);
       const payload = await rpc("create_scopeproof_session", {
         p_token: token,
@@ -428,8 +454,9 @@ async function startSession() {
         p_user_agent: navigator.userAgent.slice(0, 400),
         p_viewport_width: window.innerWidth,
         p_viewport_height: window.innerHeight,
-      });
+      }, { retries: 2 });
       applySession(payload, token);
+      state.pendingToken = null;
       createEvent(order[0], "session_start", {
         item_order: order,
         raw_query: window.location.search,
