@@ -155,6 +155,9 @@ def main() -> int:
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     assert 'lang="zh-CN"' in html
     assert 'name="viewport"' in html
+    assert 'styles.css?v=1.1.3' in html
+    assert 'config.js?v=1.1.3' in html
+    assert 'app.js?v=1.1.3' in html
     assert "只根据本页资料判断" in html
     assert "我们不问商家是不是故意说谎" in html
     assert "尚未选择" in html
