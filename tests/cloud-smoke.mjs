@@ -9,14 +9,18 @@ vm.runInNewContext(readFileSync(new URL("../config.js", import.meta.url), "utf8"
 const config = sandbox.window.SCOPEPROOF_CONFIG;
 assert.equal(config.stimulusSet, STIMULUS_SET);
 
+function supabaseHeaders() {
+  const headers = { apikey: config.supabaseAnonKey, "Content-Type": "application/json" };
+  if (!config.supabaseAnonKey.startsWith("sb_publishable_")) {
+    headers.Authorization = `Bearer ${config.supabaseAnonKey}`;
+  }
+  return headers;
+}
+
 async function rpc(name, body) {
   const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
     method: "POST",
-    headers: {
-      apikey: config.supabaseAnonKey,
-      Authorization: `Bearer ${config.supabaseAnonKey}`,
-      "Content-Type": "application/json",
-    },
+    headers: supabaseHeaders(),
     body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => null);
@@ -27,11 +31,7 @@ async function rpc(name, body) {
 async function rpcMustFail(name, body, expectedMessage) {
   const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
     method: "POST",
-    headers: {
-      apikey: config.supabaseAnonKey,
-      Authorization: `Bearer ${config.supabaseAnonKey}`,
-      "Content-Type": "application/json",
-    },
+    headers: supabaseHeaders(),
     body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => null);
@@ -40,10 +40,7 @@ async function rpcMustFail(name, body, expectedMessage) {
 }
 
 const directRead = await fetch(`${config.supabaseUrl}/rest/v1/scopeproof_sessions?select=*`, {
-  headers: {
-    apikey: config.supabaseAnonKey,
-    Authorization: `Bearer ${config.supabaseAnonKey}`,
-  },
+  headers: supabaseHeaders(),
 });
 assert.equal(directRead.ok, false, "Anonymous users must not read study tables directly");
 

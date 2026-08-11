@@ -155,9 +155,9 @@ def main() -> int:
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     assert 'lang="zh-CN"' in html
     assert 'name="viewport"' in html
-    assert 'styles.css?v=1.1.3' in html
-    assert 'config.js?v=1.1.3' in html
-    assert 'app.js?v=1.1.3' in html
+    assert 'styles.css?v=1.1.4' in html
+    assert 'config.js?v=1.1.4' in html
+    assert 'app.js?v=1.1.4' in html
     assert "只根据本页资料判断" in html
     assert "我们不问商家是不是故意说谎" in html
     assert "尚未选择" in html
@@ -194,6 +194,8 @@ def main() -> int:
     assert "state.pendingToken || randomToken()" in app
     assert "p_viewport_height: Math.max(240, window.innerHeight)" in app
     assert "错误 ${response.status}" in app
+    assert 'if (!config.supabaseAnonKey.startsWith("sb_publishable_"))' in app
+    assert "headers: supabaseHeaders()" in app
     assert 'id: "insufficient"' in app
     assert 'id: "refuted"' in app
     assert '["localhost", "127.0.0.1", "::1", "[::1]"]' in app

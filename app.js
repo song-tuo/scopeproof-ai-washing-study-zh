@@ -303,6 +303,18 @@ function wait(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
+function supabaseHeaders() {
+  const headers = {
+    apikey: config.supabaseAnonKey,
+    "Content-Type": "application/json",
+  };
+  // Legacy anon keys are JWTs; new sb_publishable_ keys explicitly are not.
+  if (!config.supabaseAnonKey.startsWith("sb_publishable_")) {
+    headers.Authorization = `Bearer ${config.supabaseAnonKey}`;
+  }
+  return headers;
+}
+
 async function rpc(name, body, { retries = 0 } = {}) {
   if (!config.supabaseUrl || !config.supabaseAnonKey) {
     throw new Error("云端数据服务还没有配置。请联系研究人员。");
@@ -312,11 +324,7 @@ async function rpc(name, body, { retries = 0 } = {}) {
     try {
       response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
         method: "POST",
-        headers: {
-          apikey: config.supabaseAnonKey,
-          Authorization: `Bearer ${config.supabaseAnonKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: supabaseHeaders(),
         body: JSON.stringify(body),
       });
     } catch (error) {
