@@ -9,8 +9,8 @@
 - 刺激版本：`study12-zh-cn-v1.0`
 - H3 答案键版本：`h3-set-v1.0`
 - 练习版本：`practice-v1.1`
-- 回响任务编号：`202608102142`
-- 回响返回地址：`https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142`
+- 回响任务编号：`202608136612`
+- 回响返回地址：`https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608136612`
 
 数据库密码保存在本机钥匙串，服务名称为 `scopeproof-ai-washing-study-zh-db`。网页只包含公开 publishable key，不包含数据库密码或 secret/service-role key。
 

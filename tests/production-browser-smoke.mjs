@@ -5,7 +5,7 @@ const baseUrl = process.env.SCOPEPROOF_PRODUCTION_URL
   || "https://song-tuo.github.io/scopeproof-ai-washing-study-zh/";
 const participant = `TEST-WEB-${Date.now()}`;
 const url = baseUrl;
-const huixiangReturnUrl = "https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608102142";
+const huixiangReturnUrl = "https://www.huixiangdata.com/transferPage?url=https%3A%2F%2Fwww.huixiangdata.com%2Fquestionnaire%2Fapi%2Fv1%2Fanswer%2Fthird%2Fcallback%2Fsubmit%2F202608136612";
 const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const browser = await chromium.launch({ headless: true, executablePath: chrome });
 

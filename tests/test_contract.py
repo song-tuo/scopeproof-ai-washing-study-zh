@@ -175,7 +175,7 @@ def main() -> int:
     assert "请输入回响用户编号" not in html
     assert "这个实验链接不完整" not in html
     assert 'id="huixiang-return"' in html
-    assert "202608102142" in html
+    assert "202608136612" in html
     assert 'id="completion-code"' not in html
     assert 'class="session-facts"' not in html
     for removed_text in ("题目数量", "大约用时", "参与编号", "全部完成", "谢谢您的认真作答", "12 条题目已经保存"):
